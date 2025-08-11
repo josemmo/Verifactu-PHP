@@ -2,7 +2,6 @@
 namespace josemmo\Verifactu\Models\Records;
 
 use Symfony\Component\Validator\Constraints as Assert;
-use Symfony\Component\Validator\Context\ExecutionContextInterface;
 use josemmo\Verifactu\Models\Model;
 
 /**
@@ -50,6 +49,7 @@ class BreakdownDetails extends Model {
      * @field BaseImponibleOimporteNoSujeto
      */
     #[Assert\NotBlank]
+    //#[Assert\Regex(pattern: '/^\d{1,12}\.\d{2}$/')]
     #[Assert\Regex(pattern: '/^-?\d{1,12}\.\d{2}$/')]
     public string $baseAmount;
 
@@ -59,29 +59,23 @@ class BreakdownDetails extends Model {
      * @field CuotaRepercutida
      */
     #[Assert\NotBlank]
+    //#[Assert\Regex(pattern: '/^\d{1,12}\.\d{2}$/')]
     #[Assert\Regex(pattern: '/^-?\d{1,12}\.\d{2}$/')]
     public string $taxAmount;
 
-    #[Assert\Callback]
-    final public function validateTaxAmount(ExecutionContextInterface $context): void {
-        if (!isset($this->taxRate) || !isset($this->baseAmount) || !isset($this->taxAmount)) {
-            return;
-        }
+    /**
+     * Causa de exención (obligatoria si IVA = 0%)
+     *
+     * @field CausaExencion
+     */
+    #[Assert\Length(min: 2, max: 2)]
+    public ?string $exemptReasonCode = null;
 
-        $validTaxAmount = false;
-        $bestTaxAmount = (float) $this->baseAmount * ((float) $this->taxRate / 100);
-        foreach ([0, -0.01, 0.01, -0.02, 0.02] as $tolerance) {
-            $expectedTaxAmount = number_format($bestTaxAmount + $tolerance, 2, '.', '');
-            if ($this->taxAmount === $expectedTaxAmount) {
-                $validTaxAmount = true;
-                break;
-            }
-        }
-        if (!$validTaxAmount) {
-            $bestTaxAmount = number_format($bestTaxAmount, 2, '.', '');
-            $context->buildViolation("Expected tax amount of $bestTaxAmount, got {$this->taxAmount}")
-                ->atPath('taxAmount')
-                ->addViolation();
-        }
-    }
+    /**
+     * Descripción de la exención
+     *
+     * @field DescripcionExencion
+     */
+    #[Assert\Length(max: 500)]
+    public ?string $exemptReason = null;
 }
