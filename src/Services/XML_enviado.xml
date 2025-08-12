@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:sum="https://www2.agenciatributaria.gob.es/static_files/common/internet/dep/aplicaciones/es/aeat/tike/cont/ws/SuministroLR.xsd" xmlns:sum1="https://www2.agenciatributaria.gob.es/static_files/common/internet/dep/aplicaciones/es/aeat/tike/cont/ws/SuministroInformacion.xsd">
+  <soapenv:Header/>
+  <soapenv:Body>
+    <sum:RegFactuSistemaFacturacion>
+      <sum:Cabecera>
+        <sum1:ObligadoEmision>
+          <sum1:NombreRazon>Alejandro Martos Gómez</sum1:NombreRazon>
+          <sum1:NIF>74823657b</sum1:NIF>
+        </sum1:ObligadoEmision>
+      </sum:Cabecera>
+      <sum:RegistroFactura>
+        <sum1:RegistroAlta>
+          <sum1:IDVersion>1.0</sum1:IDVersion>
+          <sum1:IDFactura>
+            <sum1:IDEmisorFactura>74823657b</sum1:IDEmisorFactura>
+            <sum1:NumSerieFactura>20250319</sum1:NumSerieFactura>
+            <sum1:FechaExpedicionFactura>11-08-2025</sum1:FechaExpedicionFactura>
+          </sum1:IDFactura>
+          <sum1:NombreRazonEmisor>Alejandro Martos Gómez</sum1:NombreRazonEmisor>
+          <sum1:TipoFactura>F1</sum1:TipoFactura>
+          <sum1:DescripcionOperacion>Factura ordinaria</sum1:DescripcionOperacion>
+          <sum1:Destinatarios>
+            <sum1:IDDestinatario>
+              <sum1:NombreRazon>Alejandro Martos Gomez</sum1:NombreRazon>
+              <sum1:NIF>74823657b</sum1:NIF>
+            </sum1:IDDestinatario>
+          </sum1:Destinatarios>
+          <sum1:Desglose>
+            <sum1:DetalleDesglose>
+              <sum1:Impuesto>01</sum1:Impuesto>
+              <sum1:ClaveRegimen>01</sum1:ClaveRegimen>
+              <sum1:CalificacionOperacion>S1</sum1:CalificacionOperacion>
+              <sum1:TipoImpositivo>21.00</sum1:TipoImpositivo>
+              <sum1:BaseImponibleOimporteNoSujeto>1.00</sum1:BaseImponibleOimporteNoSujeto>
+              <sum1:CuotaRepercutida>0.21</sum1:CuotaRepercutida>
+            </sum1:DetalleDesglose>
+            <sum1:DetalleDesglose>
+              <sum1:Impuesto>01</sum1:Impuesto>
+              <sum1:ClaveRegimen>01</sum1:ClaveRegimen>
+              <sum1:CalificacionOperacion>S1</sum1:CalificacionOperacion>
+              <sum1:TipoImpositivo>21.00</sum1:TipoImpositivo>
+              <sum1:BaseImponibleOimporteNoSujeto>1.00</sum1:BaseImponibleOimporteNoSujeto>
+              <sum1:CuotaRepercutida>0.21</sum1:CuotaRepercutida>
+            </sum1:DetalleDesglose>
+            <sum1:DetalleDesglose>
+              <sum1:Impuesto>01</sum1:Impuesto>
+              <sum1:ClaveRegimen>02</sum1:ClaveRegimen>
+              <sum1:CalificacionOperacion>S1</sum1:CalificacionOperacion>
+              <sum1:TipoRecargoEquivalencia>5.20</sum1:TipoRecargoEquivalencia>
+              <sum1:BaseImponibleOimporteNoSujeto>1.00</sum1:BaseImponibleOimporteNoSujeto>
+              <sum1:CuotaRepercutida>0.05</sum1:CuotaRepercutida>
+            </sum1:DetalleDesglose>
+          </sum1:Desglose>
+          <sum1:CuotaTotal>0.47</sum1:CuotaTotal>
+          <sum1:ImporteTotal>2.47</sum1:ImporteTotal>
+          <sum1:Encadenamiento>
+            <sum1:RegistroAnterior>
+              <sum1:IDEmisorFactura>74823657b</sum1:IDEmisorFactura>
+              <sum1:NumSerieFactura>20250318</sum1:NumSerieFactura>
+              <sum1:FechaExpedicionFactura>11-08-2025</sum1:FechaExpedicionFactura>
+              <sum1:Huella>147097A6C89D99C622AA6CF2377C6BBC4849D2EF6673ECBBFC20A6505353A4B7</sum1:Huella>
+            </sum1:RegistroAnterior>
+          </sum1:Encadenamiento>
+          <sum1:SistemaInformatico>
+            <sum1:NombreRazon>Alejandro Martos Gómez</sum1:NombreRazon>
+            <sum1:NIF>74823657B</sum1:NIF>
+            <sum1:NombreSistemaInformatico>Orbital ERP</sum1:NombreSistemaInformatico>
+            <sum1:IdSistemaInformatico>OE</sum1:IdSistemaInformatico>
+            <sum1:Version>2.1.0</sum1:Version>
+            <sum1:NumeroInstalacion>001</sum1:NumeroInstalacion>
+            <sum1:TipoUsoPosibleSoloVerifactu>S</sum1:TipoUsoPosibleSoloVerifactu>
+            <sum1:TipoUsoPosibleMultiOT>N</sum1:TipoUsoPosibleMultiOT>
+            <sum1:IndicadorMultiplesOT>N</sum1:IndicadorMultiplesOT>
+          </sum1:SistemaInformatico>
+          <sum1:FechaHoraHusoGenRegistro>2025-08-11T21:41:19+00:00</sum1:FechaHoraHusoGenRegistro>
+          <sum1:TipoHuella>01</sum1:TipoHuella>
+          <sum1:Huella>1B75FFE79FFC78B0CD38E418968E701ADF73C9FF314FBA23FB41A7868291F02C</sum1:Huella>
+        </sum1:RegistroAlta>
+      </sum:RegistroFactura>
+    </sum:RegFactuSistemaFacturacion>
+  </soapenv:Body>
+</soapenv:Envelope>

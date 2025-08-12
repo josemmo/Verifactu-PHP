@@ -7,6 +7,8 @@ use UXML\UXML;
 use josemmo\Verifactu\Models\ComputerSystem;
 use josemmo\Verifactu\Models\Records\FiscalIdentifier;
 use josemmo\Verifactu\Models\Records\RegistrationRecord;
+use josemmo\Verifactu\Models\Records\RegistrationType;
+use josemmo\Verifactu\Models\Records\RegimeType;
 
 /**
  * Class to communicate with the AEAT web service endpoint for VERI*FACTU
@@ -46,6 +48,9 @@ class AeatClient {
         ]);
     }
 
+    //para llevarme el xml
+    private ?string $lastRequestXml = null;
+
     /**
      * Set representative
      *
@@ -81,8 +86,8 @@ class AeatClient {
         // Build initial request
         $xml = UXML::newInstance('soapenv:Envelope', null, [
             'xmlns:soapenv' => self::NS_SOAPENV,
-            'xmlns:sum' => self::NS_SUM,
-            'xmlns:sum1' => self::NS_SUM1,
+            'xmlns:sum'     => self::NS_SUM,
+            'xmlns:sum1'    => self::NS_SUM1,
         ]);
         $xml->add('soapenv:Header');
         $baseElement = $xml->add('soapenv:Body')->add('sum:RegFactuSistemaFacturacion');
@@ -100,49 +105,77 @@ class AeatClient {
 
         // Add registration records
         foreach ($records as $record) {
-            $recordElement = $baseElement->add('sum:RegistroFactura')->add('sum1:RegistroAlta');
-            $recordElement->add('sum1:IDVersion', '1.0');
+            $recordElement = $baseElement->add('sum:RegistroFactura');
+            $registroElement = $recordElement->add('sum1:RegistroAlta');
+            $registroElement->add('sum1:IDVersion', '1.0');
 
-            $idFacturaElement = $recordElement->add('sum1:IDFactura');
+            // IDFactura
+            $idFacturaElement = $registroElement->add('sum1:IDFactura');
             $idFacturaElement->add('sum1:IDEmisorFactura', $record->invoiceId->issuerId);
             $idFacturaElement->add('sum1:NumSerieFactura', $record->invoiceId->invoiceNumber);
             $idFacturaElement->add('sum1:FechaExpedicionFactura', $record->invoiceId->issueDate->format('d-m-Y'));
 
-            $recordElement->add('sum1:NombreRazonEmisor', $record->issuerName);
-            $recordElement->add('sum1:TipoFactura', $record->invoiceType->value);
-            $recordElement->add('sum1:DescripcionOperacion', $record->description);
+            // Datos de la factura
+            $registroElement->add('sum1:NombreRazonEmisor', $record->issuerName);
+            $registroElement->add('sum1:TipoFactura', $record->invoiceType->value);
 
-            if (count($record->recipients) > 0) {
-                $destinatariosElement = $recordElement->add('sum1:Destinatarios');
-                foreach ($record->recipients as $recipient) {
-                    $destinatarioElement = $destinatariosElement->add('sum1:IDDestinatario');
-                    $destinatarioElement->add('sum1:NombreRazon', $recipient->name);
-                    if ($recipient instanceof FiscalIdentifier) {
-                        $destinatarioElement->add('sum1:NIF', $recipient->nif);
-                    } else {
-                        $idOtroElement = $destinatarioElement->add('sum1:IDOtro');
-                        $idOtroElement->add('sum1:CodigoPais', $recipient->country);
-                        $idOtroElement->add('sum1:IDType', $recipient->type->value);
-                        $idOtroElement->add('sum1:ID', $recipient->value);
+            if (str_starts_with($record->invoiceType->value, 'R') /*&& $record->rectificationType !== null*/) {
+                $registroElement->add('sum1:TipoRectificativa', $record->rectificationType);
+            }
+
+            $registroElement->add('sum1:DescripcionOperacion', $record->description);
+
+            if (in_array($record->invoiceType->value, ['F1', 'R1', 'R2', 'R3', 'R4']) && $record->recipient !== null) {
+                $destinatarios = $registroElement->add('sum1:Destinatarios');
+                $idDestinatario = $destinatarios->add('sum1:IDDestinatario');
+                $idDestinatario->add('sum1:NombreRazon', $record->recipient->name);
+                $idDestinatario->add('sum1:NIF', $record->recipient->nif);
+            }
+
+            // Desglose
+            $desgloseElement = $registroElement->add('sum1:Desglose');
+            foreach ($record->breakdown as $breakdownDetails) {
+                $detalleDesgloseElement = $desgloseElement->add('sum1:DetalleDesglose');
+                $detalleDesgloseElement->add('sum1:Impuesto', $breakdownDetails->taxType->value);
+                
+                // ### INICIO MODIFICACIÓN ###
+                if ($breakdownDetails->regimeType !== null) {
+                    $detalleDesgloseElement->add('sum1:ClaveRegimen', $breakdownDetails->regimeType->value);
+                }
+                // ### FIN MODIFICACIÓN ###
+                
+                if(!empty($breakdownDetails->exemptReasonCode)){
+                    $detalleDesgloseElement->add('sum1:OperacionExenta', $breakdownDetails->exemptReasonCode);
+                    $detalleDesgloseElement->add('sum1:BaseImponibleOimporteNoSujeto', $breakdownDetails->baseAmount);
+                } else {
+                    $detalleDesgloseElement->add('sum1:CalificacionOperacion', $breakdownDetails->operationType->value);
+                    $detalleDesgloseElement->add('sum1:TipoImpositivo', $breakdownDetails->taxRate);
+                    $detalleDesgloseElement->add('sum1:BaseImponibleOimporteNoSujeto', $breakdownDetails->baseAmount);
+                    $detalleDesgloseElement->add('sum1:CuotaRepercutida', $breakdownDetails->taxAmount);
+
+                    if ($breakdownDetails->surchargeRate !== null && $breakdownDetails->surchargeAmount !== null) {
+                        $detalleDesgloseElement->add('sum1:TipoRecargoEquivalencia', $breakdownDetails->surchargeRate);
+                        $detalleDesgloseElement->add('sum1:CuotaRecargoEquivalencia', $breakdownDetails->surchargeAmount);
                     }
                 }
             }
 
-            $desgloseElement = $recordElement->add('sum1:Desglose');
-            foreach ($record->breakdown as $breakdownDetails) {
-                $detalleDesgloseElement = $desgloseElement->add('sum1:DetalleDesglose');
-                $detalleDesgloseElement->add('sum1:Impuesto', $breakdownDetails->taxType->value);
-                $detalleDesgloseElement->add('sum1:ClaveRegimen', $breakdownDetails->regimeType->value);
-                $detalleDesgloseElement->add('sum1:CalificacionOperacion', $breakdownDetails->operationType->value);
-                $detalleDesgloseElement->add('sum1:TipoImpositivo', $breakdownDetails->taxRate);
-                $detalleDesgloseElement->add('sum1:BaseImponibleOimporteNoSujeto', $breakdownDetails->baseAmount);
-                $detalleDesgloseElement->add('sum1:CuotaRepercutida', $breakdownDetails->taxAmount);
+            $registroElement->add('sum1:CuotaTotal', $record->totalTaxAmount);
+            $registroElement->add('sum1:ImporteTotal', $record->totalAmount);
+
+            if (str_starts_with($record->invoiceType->value, 'R') &&
+                $record->rectificationType === 'S' &&
+                $record->rectifiedBaseAmount !== null &&
+                $record->rectifiedTaxAmount !== null) {
+
+                $importeRectificacion = $registroElement->add('sum1:ImporteRectificacion');
+                $importeRectificacion->add('sum1:BaseRectificada', $record->rectifiedBaseAmount);
+                $importeRectificacion->add('sum1:CuotaRectificada', $record->rectifiedTaxAmount);
+                $importeRectificacion->add('sum1:FechaOperacion', $record->operationDate);
             }
 
-            $recordElement->add('sum1:CuotaTotal', $record->totalTaxAmount);
-            $recordElement->add('sum1:ImporteTotal', $record->totalAmount);
-
-            $encadenamientoElement = $recordElement->add('sum1:Encadenamiento');
+            // Encadenamiento
+            $encadenamientoElement = $registroElement->add('sum1:Encadenamiento');
             if ($record->previousInvoiceId === null) {
                 $encadenamientoElement->add('sum1:PrimerRegistro', 'S');
             } else {
@@ -153,7 +186,8 @@ class AeatClient {
                 $registroAnteriorElement->add('sum1:Huella', $record->previousHash);
             }
 
-            $sistemaInformaticoElement = $recordElement->add('sum1:SistemaInformatico');
+            // Sistema Informático
+            $sistemaInformaticoElement = $registroElement->add('sum1:SistemaInformatico');
             $sistemaInformaticoElement->add('sum1:NombreRazon', $this->system->vendorName);
             $sistemaInformaticoElement->add('sum1:NIF', $this->system->vendorNif);
             $sistemaInformaticoElement->add('sum1:NombreSistemaInformatico', $this->system->name);
@@ -164,36 +198,234 @@ class AeatClient {
             $sistemaInformaticoElement->add('sum1:TipoUsoPosibleMultiOT', $this->system->supportsMultipleTaxpayers ? 'S' : 'N');
             $sistemaInformaticoElement->add('sum1:IndicadorMultiplesOT', $this->system->hasMultipleTaxpayers ? 'S' : 'N');
 
-            $recordElement->add('sum1:FechaHoraHusoGenRegistro', $record->hashedAt->format('c'));
-            $recordElement->add('sum1:TipoHuella', '01'); // SHA-256
-            $recordElement->add('sum1:Huella', $record->hash);
+            $registroElement->add('sum1:FechaHoraHusoGenRegistro', $record->hashedAt->format('c'));
+            $registroElement->add('sum1:TipoHuella', '01');
+            $registroElement->add('sum1:Huella', $record->hash);
         }
 
         // Send request
         $response = $this->client->post('/wlpl/TIKE-CONT/ws/SistemaFacturacion/VerifactuSOAP', [
             'base_uri' => $this->getBaseUri(),
-            'headers' => [
-                'Content-Type' => 'text/xml',
-            ],
-            'body' => $xml->asXML(),
+            'headers' => ['Content-Type' => 'text/xml'],
+            'body'    => $xml->asXML(),
         ]);
+        $this->lastRequestXml = $xml->asXML();
+        return UXML::fromString($response->getBody()->getContents());
+    }
 
-// DEBUG: Guardar el XML enviado
-$logPath = __DIR__ . '/../../../../../logs/XML_enviado.xml';
-if (!is_dir(dirname($logPath))) {
-    mkdir(dirname($logPath), 0755, true);
-}
-file_put_contents($logPath, $xml->asXML());
-// aqui acaba el debug
+    public function sendRegistrationRecordsRectificativa(array $records): UXML
+    {
+        $xml = UXML::newInstance('soapenv:Envelope', null, [
+            'xmlns:soapenv' => self::NS_SOAPENV,
+            'xmlns:sum'     => self::NS_SUM,
+            'xmlns:sum1'    => self::NS_SUM1,
+        ]);
+        $xml->add('soapenv:Header');
+        $baseElement = $xml->add('soapenv:Body')->add('sum:RegFactuSistemaFacturacion');
+
+         // Add header
+        $cabeceraElement = $baseElement->add('sum:Cabecera');
+        $obligadoEmisionElement = $cabeceraElement->add('sum1:ObligadoEmision');
+        $obligadoEmisionElement->add('sum1:NombreRazon', $this->taxpayer->name);
+        $obligadoEmisionElement->add('sum1:NIF', $this->taxpayer->nif);
+        if ($this->representative !== null) {
+            $representanteElement = $cabeceraElement->add('sum1:Representante');
+            $representanteElement->add('sum1:NombreRazon', $this->representative->name);
+            $representanteElement->add('sum1:NIF', $this->representative->nif);
+        }
+
+        foreach ($records as $record) {
+
+            $recordElement = $baseElement->add('sum:RegistroFactura');
+            $registroElement = $recordElement->add('sum1:RegistroAlta');
+            $registroElement->add('sum1:IDVersion', '1.0');
+
+            // IDFactura
+            $idFacturaElement = $registroElement->add('sum1:IDFactura');
+            $idFacturaElement->add('sum1:IDEmisorFactura', $record->invoiceId->issuerId);
+            $idFacturaElement->add('sum1:NumSerieFactura', $record->invoiceId->invoiceNumber);
+            $idFacturaElement->add('sum1:FechaExpedicionFactura', $record->invoiceId->issueDate->format('d-m-Y'));
+  
+            $registroElement->add('sum1:NombreRazonEmisor', $record->issuerName);
+            $registroElement->add('sum1:TipoFactura', $record->invoiceType->value);
+
+            if (str_starts_with($record->invoiceType->value, 'R') /*&& $record->rectificationType !== null*/) {
+                $registroElement->add('sum1:TipoRectificativa', $record->rectificationType);
+            }
+            
+
+            $facturasSustituidas = $registroElement->add('sum1:FacturasRectificadas');
+            $idFacturaSustituida = $facturasSustituidas->add('sum1:IDFacturaRectificada');
+            $idFacturaSustituida->add('sum1:IDEmisorFactura', $record->invoiceIdRectified->issuerId);
+            $idFacturaSustituida->add('sum1:NumSerieFactura', $record->invoiceIdRectified->invoiceNumber);
+            $idFacturaSustituida->add('sum1:FechaExpedicionFactura', $record->invoiceIdRectified->issueDate->format('d-m-Y'));
+
+            if (str_starts_with($record->invoiceType->value, 'R') && $record->rectificationType === 'S' && $record->rectifiedBaseAmount !== null && $record->rectifiedTaxAmount !== null) {
+
+                $importeRectificacion = $registroElement->add('sum1:ImporteRectificacion');
+                $importeRectificacion->add('sum1:BaseRectificada', $record->rectifiedBaseAmount);
+                $importeRectificacion->add('sum1:CuotaRectificada', $record->rectifiedTaxAmount);
+            }
+
+            $registroElement->add('sum1:DescripcionOperacion', $record->description);
+
+            if (in_array($record->invoiceType->value, ['F1', 'R1', 'R2', 'R3', 'R4']) && $record->recipient !== null) {
+                $destinatarios = $registroElement->add('sum1:Destinatarios');
+                $idDestinatario = $destinatarios->add('sum1:IDDestinatario');
+                $idDestinatario->add('sum1:NombreRazon', $record->recipient->name);
+                $idDestinatario->add('sum1:NIF', $record->recipient->nif);
+            }
+
+            // Desglose
+            $desgloseElement = $registroElement->add('sum1:Desglose');
+            foreach ($record->breakdown as $breakdownDetails) {
+                $detalleDesgloseElement = $desgloseElement->add('sum1:DetalleDesglose');
+                $detalleDesgloseElement->add('sum1:Impuesto', $breakdownDetails->taxType->value);
+
+                // ### INICIO MODIFICACIÓN ###
+                if ($breakdownDetails->regimeType !== null) {
+                    $detalleDesgloseElement->add('sum1:ClaveRegimen', $breakdownDetails->regimeType->value);
+                }
+                // ### FIN MODIFICACIÓN ###
+                
+                if(!empty($breakdownDetails->exemptReasonCode)){
+                    $detalleDesgloseElement->add('sum1:OperacionExenta', $breakdownDetails->exemptReasonCode);
+                    $detalleDesgloseElement->add('sum1:BaseImponibleOimporteNoSujeto', $breakdownDetails->baseAmount);
+                } else {
+                    $detalleDesgloseElement->add('sum1:CalificacionOperacion', $breakdownDetails->operationType->value);
+                    $detalleDesgloseElement->add('sum1:TipoImpositivo', $breakdownDetails->taxRate);
+                    $detalleDesgloseElement->add('sum1:BaseImponibleOimporteNoSujeto', $breakdownDetails->baseAmount);
+                    $detalleDesgloseElement->add('sum1:CuotaRepercutida', $breakdownDetails->taxAmount);
+
+                    if ($breakdownDetails->surchargeRate !== null && $breakdownDetails->surchargeAmount !== null) {
+                        $detalleDesgloseElement->add('sum1:TipoRecargoEquivalencia', $breakdownDetails->surchargeRate);
+                        $detalleDesgloseElement->add('sum1:CuotaRecargoEquivalencia', $breakdownDetails->surchargeAmount);
+                    }
+                }
+            }
+
+            $registroElement->add('sum1:CuotaTotal', $record->totalTaxAmount);
+            $registroElement->add('sum1:ImporteTotal', $record->totalAmount);
+
+            
+            if ($record->previousInvoiceId === null) {
+                throw new \InvalidArgumentException('En REGISTRO_R1_SUSTITUCION es obligatorio Encadenamiento/RegistroAnterior');
+            }
+            $enc = $registroElement->add('sum1:Encadenamiento');
+            $ra = $enc->add('sum1:RegistroAnterior');
+            $ra->add('sum1:IDEmisorFactura', $record->previousInvoiceId->issuerId);
+            $ra->add('sum1:NumSerieFactura', $record->previousInvoiceId->invoiceNumber);
+            $ra->add('sum1:FechaExpedicionFactura', $record->previousInvoiceId->issueDate->format('d-m-Y'));
+            $ra->add('sum1:Huella', $record->previousHash);
+
+            // SistemaInformatico dentro de RegistroAnulacion
+            $sis = $registroElement->add('sum1:SistemaInformatico');
+            $sis->add('sum1:NombreRazon', $this->system->vendorName);
+            $sis->add('sum1:NIF', $this->system->vendorNif);
+            $sis->add('sum1:NombreSistemaInformatico', $this->system->name);
+            $sis->add('sum1:IdSistemaInformatico', $this->system->id);
+            $sis->add('sum1:Version', $this->system->version);
+            $sis->add('sum1:NumeroInstalacion', $this->system->installationNumber);
+            $sis->add('sum1:TipoUsoPosibleSoloVerifactu', $this->system->onlySupportsVerifactu ? 'S' : 'N');
+            $sis->add('sum1:TipoUsoPosibleMultiOT', $this->system->supportsMultipleTaxpayers ? 'S' : 'N');
+            $sis->add('sum1:IndicadorMultiplesOT', $this->system->hasMultipleTaxpayers ? 'S' : 'N');
+
+            $registroElement->add('sum1:FechaHoraHusoGenRegistro', $record->hashedAt->format('c'));
+            $registroElement->add('sum1:TipoHuella', '01');
+            $registroElement->add('sum1:Huella', $record->hash);
+
+        }
+
+        $response = $this->client->post('/wlpl/TIKE-CONT/ws/SistemaFacturacion/VerifactuSOAP', [
+            'base_uri' => $this->getBaseUri(),
+            'headers'  => ['Content-Type' => 'text/xml'],
+            'body'     => $xml->asXML(),
+        ]);
+        $this->lastRequestXml = $xml->asXML();
 
         return UXML::fromString($response->getBody()->getContents());
     }
 
-    /**
-     * Get base URI of web service
-     *
-     * @return string Base URI
-     */
+
+    public function sendRegistrationRecordsAnulate(array $records): UXML 
+    {
+        $xml = UXML::newInstance('soapenv:Envelope', null, [
+            'xmlns:soapenv' => self::NS_SOAPENV,
+            'xmlns:sum'     => self::NS_SUM,
+            'xmlns:sum1'    => self::NS_SUM1,
+        ]);
+        $xml->add('soapenv:Header');
+        $baseElement = $xml->add('soapenv:Body')->add('sum:RegFactuSistemaFacturacion');
+
+        $cabecera = $baseElement->add('sum:Cabecera');
+        $obligado = $cabecera->add('sum1:ObligadoEmision');
+        $obligado->add('sum1:NombreRazon', $this->taxpayer->name);
+        $obligado->add('sum1:NIF', $this->taxpayer->nif);
+        if ($this->representative !== null) {
+            $rep = $cabecera->add('sum1:Representante');
+            $rep->add('sum1:NombreRazon', $this->representative->name);
+            $rep->add('sum1:NIF', $this->representative->nif);
+        }
+
+        foreach ($records as $record) {
+
+            $recordElement = $baseElement->add('sum:RegistroFactura');
+
+            $raElem = $recordElement->add('sum1:RegistroAnulacion');
+            $raElem->add('sum1:IDVersion', '1.0');
+
+            // IDFactura (***Anulada***)
+            $idFactura = $raElem->add('sum1:IDFactura');
+            $idFactura->add('sum1:IDEmisorFacturaAnulada', $record->invoiceId->issuerId);
+            $idFactura->add('sum1:NumSerieFacturaAnulada', $record->invoiceId->invoiceNumber);
+            $idFactura->add('sum1:FechaExpedicionFacturaAnulada', $record->invoiceId->issueDate->format('d-m-Y'));
+
+            // Encadenamiento obligatorio dentro de RegistroAnulacion
+            if ($record->previousInvoiceId === null) {
+                throw new \InvalidArgumentException('En REGISTRO_ANULACION es obligatorio Encadenamiento/RegistroAnterior');
+            }
+            $enc = $raElem->add('sum1:Encadenamiento');
+            $ra = $enc->add('sum1:RegistroAnterior');
+            $ra->add('sum1:IDEmisorFactura', $record->previousInvoiceId->issuerId);
+            $ra->add('sum1:NumSerieFactura', $record->previousInvoiceId->invoiceNumber);
+            $ra->add('sum1:FechaExpedicionFactura', $record->previousInvoiceId->issueDate->format('d-m-Y'));
+            $ra->add('sum1:Huella', $record->previousHash);
+
+            // SistemaInformatico dentro de RegistroAnulacion
+            $sis = $raElem->add('sum1:SistemaInformatico');
+            $sis->add('sum1:NombreRazon', $this->system->vendorName);
+            $sis->add('sum1:NIF', $this->system->vendorNif);
+            $sis->add('sum1:NombreSistemaInformatico', $this->system->name);
+            $sis->add('sum1:IdSistemaInformatico', $this->system->id);
+            $sis->add('sum1:Version', $this->system->version);
+            $sis->add('sum1:NumeroInstalacion', $this->system->installationNumber);
+            $sis->add('sum1:TipoUsoPosibleSoloVerifactu', $this->system->onlySupportsVerifactu ? 'S' : 'N');
+            $sis->add('sum1:TipoUsoPosibleMultiOT', $this->system->supportsMultipleTaxpayers ? 'S' : 'N');
+            $sis->add('sum1:IndicadorMultiplesOT', $this->system->hasMultipleTaxpayers ? 'S' : 'N');
+
+            $raElem->add('sum1:FechaHoraHusoGenRegistro', $record->hashedAt->format('c'));
+            $raElem->add('sum1:TipoHuella', '01');
+            $raElem->add('sum1:Huella', $record->hash);
+
+        }
+
+        $response = $this->client->post('/wlpl/TIKE-CONT/ws/SistemaFacturacion/VerifactuSOAP', [
+            'base_uri' => $this->getBaseUri(),
+            'headers'  => ['Content-Type' => 'text/xml'],
+            'body'     => $xml->asXML(),
+        ]);
+        $this->lastRequestXml = $xml->asXML();
+
+        return UXML::fromString($response->getBody()->getContents());
+    }
+
+
+    //me llevo el xml para guardarlo fuera y no volver a construirlo
+    public function getLastRequestXml(): ?string {
+        return $this->lastRequestXml;
+    }
+
+
     private function getBaseUri(): string {
         return $this->isProduction ? 'https://www1.aeat.es' : 'https://prewww1.aeat.es';
     }

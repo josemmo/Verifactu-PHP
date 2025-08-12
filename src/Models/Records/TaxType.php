@@ -10,6 +10,9 @@ enum TaxType: string {
 
     /** Impuesto General Indirecto Canario (IGIC) */
     case IGIC = '03';
+	
+	/** Recargo de Equivalencia */
+    case RE = '04';
 
     /** Otros */
     case Other = '05';
