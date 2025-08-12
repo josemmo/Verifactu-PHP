@@ -177,6 +177,15 @@ class AeatClient {
             ],
             'body' => $xml->asXML(),
         ]);
+
+// DEBUG: Guardar el XML enviado
+$logPath = __DIR__ . '/../../../../../logs/XML_enviado.xml';
+if (!is_dir(dirname($logPath))) {
+    mkdir(dirname($logPath), 0755, true);
+}
+file_put_contents($logPath, $xml->asXML());
+// aqui acaba el debug
+
         return UXML::fromString($response->getBody()->getContents());
     }
 
