@@ -6,6 +6,7 @@ use GuzzleHttp\Exception\GuzzleException;
 use UXML\UXML;
 use josemmo\Verifactu\Models\ComputerSystem;
 use josemmo\Verifactu\Models\Records\FiscalIdentifier;
+use josemmo\Verifactu\Models\Records\ForeignFiscalIdentifier;
 use josemmo\Verifactu\Models\Records\RegistrationRecord;
 use josemmo\Verifactu\Models\Records\RegistrationType;
 
@@ -122,8 +123,6 @@ class AeatClient {
                 $registroElement->add('sum1:TipoRectificativa', $record->rectificationType);
             }
 
-            //Todavía no está implementado ya que me falta información de la AEAT 
-
             /*$tieneExento = count(array_filter($record->breakdown, fn($detalle) =>!empty($detalle->exemptReasonCode))) > 0;
 
             //fecha operacion
@@ -133,11 +132,35 @@ class AeatClient {
 
             $registroElement->add('sum1:DescripcionOperacion', $record->description);
 
-            if (in_array($record->invoiceType->value, ['F1', 'R1', 'R2', 'R3', 'R4']) && $record->recipient !== null) {
+            /*if (in_array($record->invoiceType->value, ['F1', 'R1', 'R2', 'R3', 'R4']) && $record->recipient !== null) {
                 $destinatarios = $registroElement->add('sum1:Destinatarios');
                 $idDestinatario = $destinatarios->add('sum1:IDDestinatario');
                 $idDestinatario->add('sum1:NombreRazon', $record->recipient->name);
                 $idDestinatario->add('sum1:NIF', $record->recipient->nif);
+            }*/
+
+            if (in_array($record->invoiceType->value, ['F1','R1','R2','R3','R4'], true) && $record->recipient !== null) {
+                $destinatarios  = $registroElement->add('sum1:Destinatarios');
+                $idDestinatario = $destinatarios->add('sum1:IDDestinatario');
+                $idDestinatario->add('sum1:NombreRazon', $record->recipient->name);
+
+                // ES: <NIF>
+                if ($record->recipient instanceof FiscalIdentifier) {
+                    $idDestinatario->add('sum1:NIF', $record->recipient->nif);
+
+                // Extranjero: <IDOtro> con CodigoPais, IDType, ID
+                } elseif ($record->recipient instanceof ForeignFiscalIdentifier) {
+                    $idOtro = $idDestinatario->add('sum1:IDOtro');
+                    $idOtro->add('sum1:CodigoPais', $record->recipient->country);
+
+                    // Si tu enum ya coincide con el XSD, usa ->value directamente; si no, mapea.
+                    $idTypeValue = $record->recipient->type->value; // o mapear a código AEAT si procede
+                    $idOtro->add('sum1:IDType', $idTypeValue);
+
+                    $idOtro->add('sum1:ID', $record->recipient->value);
+                } else {
+                    throw new \RuntimeException('Tipo de recipient no soportado para Destinatarios');
+                }
             }
 
             // Desglose
@@ -272,15 +295,40 @@ class AeatClient {
                 //$importeRectificacion->add('sum1:FechaOperacion', $record->operationDate);
             }
 
-            //$registroElement->add('sum1:FechaOperacion', $record->operationDate); //TODO: LA FECHA DE LA OPERACIÓN NO PUEDE SER SUPERIOR A LA FACTURA EN MUCHAS OCASIONES, REVISAR CON LA AEAT
+            //$registroElement->add('sum1:FechaOperacion', $record->operationDate); //TODO: CUIDADO ESTO ES FORZADO
+
+           /* $tieneExento = count(array_filter($record->breakdown, fn($detalle) =>!empty($detalle->exemptReasonCode))) > 0;
+
+            //fecha operacion
+            if($record->operationDate && !$tieneExento){
+                $fechaOp = date('d-m-Y', strtotime($record->operationDate));
+                !empty($registroElement->add('sum1:FechaOperacion', $fechaOp));
+            }*/
 
             $registroElement->add('sum1:DescripcionOperacion', $record->description);
 
-            if (in_array($record->invoiceType->value, ['F1', 'R1', 'R2', 'R3', 'R4']) && $record->recipient !== null) {
-                $destinatarios = $registroElement->add('sum1:Destinatarios');
+            if (in_array($record->invoiceType->value, ['F1','R1','R2','R3','R4'], true) && $record->recipient !== null) {
+                $destinatarios  = $registroElement->add('sum1:Destinatarios');
                 $idDestinatario = $destinatarios->add('sum1:IDDestinatario');
                 $idDestinatario->add('sum1:NombreRazon', $record->recipient->name);
-                $idDestinatario->add('sum1:NIF', $record->recipient->nif);
+
+                // ES: <NIF>
+                if ($record->recipient instanceof FiscalIdentifier) {
+                    $idDestinatario->add('sum1:NIF', $record->recipient->nif);
+
+                // Extranjero: <IDOtro> con CodigoPais, IDType, ID
+                } elseif ($record->recipient instanceof ForeignFiscalIdentifier) {
+                    $idOtro = $idDestinatario->add('sum1:IDOtro');
+                    $idOtro->add('sum1:CodigoPais', $record->recipient->country);
+
+                    // Si tu enum ya coincide con el XSD, usa ->value directamente; si no, mapea.
+                    $idTypeValue = $record->recipient->type->value; // o mapear a código AEAT si procede
+                    $idOtro->add('sum1:IDType', $idTypeValue);
+
+                    $idOtro->add('sum1:ID', $record->recipient->value);
+                } else {
+                    throw new \RuntimeException('Tipo de recipient no soportado para Destinatarios');
+                }
             }
 
             // Desglose
@@ -431,6 +479,7 @@ class AeatClient {
      * @return string Base URI
      */
     private function getBaseUri(): string {
-        return $this->isProduction ? 'https://www1.aeat.es' : 'https://prewww1.aeat.es';
+        return $this->isProduction ? 'https://www1.agenciatributaria.gob.es' : 'https://prewww1.aeat.es';
     }
 }
+
