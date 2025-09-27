@@ -48,6 +48,13 @@ class RegistrationRecord extends Record {
     public array $recipients = [];
 
     /**
+     * Tipo de factura rectificativa
+     *
+     * @field TipoRectificativa
+     */
+    public ?CorrectiveType $correctiveType = null;
+
+    /**
      * Desglose de la factura
      *
      * @var BreakdownDetails[]
@@ -148,6 +155,30 @@ class RegistrationRecord extends Record {
         } elseif (!$hasRecipients) {
             $context->buildViolation('This type of invoice requires at least one recipient')
                 ->atPath('recipients')
+                ->addViolation();
+        }
+    }
+
+    #[Assert\Callback]
+    final public function validateCorrectiveType(ExecutionContextInterface $context): void {
+        if (!isset($this->invoiceType)) {
+            return;
+        }
+
+        $isCorrective = in_array($this->invoiceType, [
+            InvoiceType::R1,
+            InvoiceType::R2,
+            InvoiceType::R3,
+            InvoiceType::R4,
+            InvoiceType::R5,
+        ], true);
+        if ($isCorrective && $this->correctiveType === null) {
+            $context->buildViolation('Missing type for corrective invoice')
+                ->atPath('correctiveType')
+                ->addViolation();
+        } elseif (!$isCorrective && $this->correctiveType !== null) {
+            $context->buildViolation('This type of invoice cannot have a corrective type')
+                ->atPath('correctiveType')
                 ->addViolation();
         }
     }

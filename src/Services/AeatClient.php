@@ -184,6 +184,11 @@ class AeatClient {
 
         $recordElement->add('sum1:NombreRazonEmisor', $record->issuerName);
         $recordElement->add('sum1:TipoFactura', $record->invoiceType->value);
+
+        if ($record->correctiveType !== null) {
+            $recordElement->add('sum1:TipoRectificativa', $record->correctiveType->value);
+        }
+
         $recordElement->add('sum1:DescripcionOperacion', $record->description);
 
         if (count($record->recipients) > 0) {
