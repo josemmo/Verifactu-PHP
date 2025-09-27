@@ -222,9 +222,28 @@ final class RegistrationRecordTest extends TestCase {
             $this->assertStringContainsString('This type of invoice cannot have a corrective type', $e->getMessage());
         }
 
-        // Valid corrective type
+        // Valid corrective type for differences
+        $record->invoiceType = InvoiceType::R2;
+        $record->correctiveType = CorrectiveType::Differences;
+        $record->hash = $record->calculateHash();
+        $record->validate();
+
+        // Missing corrected amounts for substitution
         $record->invoiceType = InvoiceType::R2;
         $record->correctiveType = CorrectiveType::Substitution;
+        $record->hash = $record->calculateHash();
+        try {
+            $record->validate();
+            $this->fail('Did not throw exception for corrected amounts for substitution');
+        } catch (InvalidModelException $e) {
+            $this->assertStringContainsString('Missing corrected base amount', $e->getMessage());
+        }
+
+        // Valid corrected amounts
+        $record->invoiceType = InvoiceType::R2;
+        $record->correctiveType = CorrectiveType::Substitution;
+        $record->correctedBaseAmount = '100.00';
+        $record->correctedTaxAmount = '21.00';
         $record->hash = $record->calculateHash();
         $record->validate();
 

@@ -64,6 +64,22 @@ class RegistrationRecord extends Record {
     public array $correctedInvoices = [];
 
     /**
+     * Base imponible rectificada (para facturas rectificativas por diferencias)
+     *
+     * @field ImporteRectificacion/BaseRectificada
+     */
+    #[Assert\Regex(pattern: '/^-?\d{1,12}\.\d{2}$/')]
+    public ?string $correctedBaseAmount = null;
+
+    /**
+     * Cuota repercutida o soportada rectificada (para facturas rectificativas por diferencias)
+     *
+     * @field ImporteRectificacion/CuotaRectificada
+     */
+    #[Assert\Regex(pattern: '/^-?\d{1,12}\.\d{2}$/')]
+    public ?string $correctedTaxAmount = null;
+
+    /**
      * Listado de facturas sustituidas
      *
      * @var InvoiceIdentifier[]
@@ -207,6 +223,31 @@ class RegistrationRecord extends Record {
             $context->buildViolation('This type of invoice cannot have corrected invoices')
                 ->atPath('correctedInvoices')
                 ->addViolation();
+        }
+
+        // Corrected amounts
+        if ($this->correctiveType === CorrectiveType::Substitution) {
+            if ($this->correctedBaseAmount === null) {
+                $context->buildViolation('Missing corrected base amount for corrective invoice by substitution')
+                    ->atPath('correctedBaseAmount')
+                    ->addViolation();
+            }
+            if ($this->correctedTaxAmount === null) {
+                $context->buildViolation('Missing corrected tax amount for corrective invoice by substitution')
+                    ->atPath('correctedTaxAmount')
+                    ->addViolation();
+            }
+        } else {
+            if ($this->correctedBaseAmount !== null) {
+                $context->buildViolation('This invoice cannot have a corrected base amount')
+                    ->atPath('correctedBaseAmount')
+                    ->addViolation();
+            }
+            if ($this->correctedTaxAmount !== null) {
+                $context->buildViolation('This invoice cannot have a corrected tax amount')
+                    ->atPath('correctedTaxAmount')
+                    ->addViolation();
+            }
         }
     }
 

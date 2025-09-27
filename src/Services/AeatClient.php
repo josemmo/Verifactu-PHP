@@ -208,6 +208,11 @@ class AeatClient {
                 $facturaSustituidaElement->add('sum1:FechaExpedicionFactura', $replacedInvoice->issueDate->format('d-m-Y'));
             }
         }
+        if ($record->correctedBaseAmount !== null && $record->correctedTaxAmount !== null) {
+            $importeRectificacionElement = $recordElement->add('sum1:ImporteRectificacion');
+            $importeRectificacionElement->add('sum1:BaseRectificada', $record->correctedBaseAmount);
+            $importeRectificacionElement->add('sum1:CuotaRectificada', $record->correctedTaxAmount);
+        }
 
         $recordElement->add('sum1:DescripcionOperacion', $record->description);
 
