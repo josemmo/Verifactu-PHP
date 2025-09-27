@@ -240,4 +240,43 @@ final class RegistrationRecordTest extends TestCase {
             $this->assertStringContainsString('This type of invoice cannot have corrected invoices', $e->getMessage());
         }
     }
+
+    public function testValidatesReplacedInvoices(): void {
+        $record = new RegistrationRecord();
+        $record->invoiceId = new InvoiceIdentifier();
+        $record->invoiceId->issuerId = 'A00000000';
+        $record->invoiceId->invoiceNumber = 'SUST-0001';
+        $record->invoiceId->issueDate = new DateTimeImmutable('2025-06-01');
+        $record->issuerName = 'Perico de los Palotes, S.A.';
+        $record->description = 'Factura sustitutiva de prueba';
+        $record->recipients[0] = new FiscalIdentifier('Antonio García Pérez', '00000000A');
+        $record->breakdown[0] = new BreakdownDetails();
+        $record->breakdown[0]->taxType = TaxType::IVA;
+        $record->breakdown[0]->regimeType = RegimeType::C01;
+        $record->breakdown[0]->operationType = OperationType::S1;
+        $record->breakdown[0]->taxRate = '21.00';
+        $record->breakdown[0]->baseAmount = '10.00';
+        $record->breakdown[0]->taxAmount = '2.10';
+        $record->totalTaxAmount = '2.10';
+        $record->totalAmount = '12.10';
+        $record->previousInvoiceId = null;
+        $record->previousHash = null;
+        $record->hashedAt = new DateTimeImmutable('2025-06-01T20:30:40+02:00');
+
+        // Unnecessary replaced invoices
+        $record->invoiceType = InvoiceType::Factura;
+        $record->replacedInvoices[] = new InvoiceIdentifier('A00000000', 'PRUEBA-0001', new DateTimeImmutable());
+        $record->hash = $record->calculateHash();
+        try {
+            $record->validate();
+            $this->fail('Did not throw exception for unnecessary replaced invoices');
+        } catch (InvalidModelException $e) {
+            $this->assertStringContainsString('This type of invoice cannot have replaced invoices', $e->getMessage());
+        }
+
+        // Valid invoice type
+        $record->invoiceType = InvoiceType::Sustitutiva;
+        $record->hash = $record->calculateHash();
+        $record->validate();
+    }
 }

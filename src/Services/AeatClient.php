@@ -197,6 +197,15 @@ class AeatClient {
                 $facturaRectificadaElement->add('sum1:FechaExpedicionFactura', $correctedInvoice->issueDate->format('d-m-Y'));
             }
         }
+        if (count($record->replacedInvoices) > 0) {
+            $facturasSustituidasElement = $recordElement->add('sum1:FacturasSustituidas');
+            foreach ($record->replacedInvoices as $replacedInvoice) {
+                $facturaSustituidaElement = $facturasSustituidasElement->add('sum1:IDFacturaSustituida');
+                $facturaSustituidaElement->add('sum1:IDEmisorFactura', $replacedInvoice->issuerId);
+                $facturaSustituidaElement->add('sum1:NumSerieFactura', $replacedInvoice->invoiceNumber);
+                $facturaSustituidaElement->add('sum1:FechaExpedicionFactura', $replacedInvoice->issueDate->format('d-m-Y'));
+            }
+        }
 
         $recordElement->add('sum1:DescripcionOperacion', $record->description);
 

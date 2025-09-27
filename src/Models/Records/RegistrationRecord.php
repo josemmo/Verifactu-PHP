@@ -64,6 +64,15 @@ class RegistrationRecord extends Record {
     public array $correctedInvoices = [];
 
     /**
+     * Listado de facturas sustituidas
+     *
+     * @var InvoiceIdentifier[]
+     *
+     * @field FacturasSustituidas
+     */
+    public array $replacedInvoices = [];
+
+    /**
      * Desglose de la factura
      *
      * @var BreakdownDetails[]
@@ -197,6 +206,19 @@ class RegistrationRecord extends Record {
         if (!$isCorrective && count($this->correctedInvoices) > 0) {
             $context->buildViolation('This type of invoice cannot have corrected invoices')
                 ->atPath('correctedInvoices')
+                ->addViolation();
+        }
+    }
+
+    #[Assert\Callback]
+    final public function validateReplacedInvoices(ExecutionContextInterface $context): void {
+        if (!isset($this->invoiceType)) {
+            return;
+        }
+
+        if ($this->invoiceType !== InvoiceType::Sustitutiva && count($this->replacedInvoices) > 0) {
+            $context->buildViolation('This type of invoice cannot have replaced invoices')
+                ->atPath('replacedInvoices')
                 ->addViolation();
         }
     }
