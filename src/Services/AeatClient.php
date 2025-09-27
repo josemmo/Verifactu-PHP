@@ -236,6 +236,6 @@ class AeatClient {
      * @return string Base URI
      */
     private function getBaseUri(): string {
-        return $this->isProduction ? 'https://www1.aeat.es' : 'https://prewww1.aeat.es';
+        return $this->isProduction ? 'https://www1.agenciatributaria.gob.es' : 'https://prewww1.aeat.es';
     }
 }
