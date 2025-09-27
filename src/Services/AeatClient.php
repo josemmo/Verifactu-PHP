@@ -26,9 +26,11 @@ class AeatClient {
     /**
      * Class constructor
      *
+     * NOTE: The certificate path must have the ".p12" extension to be recognized as a PFX bundle.
+     *
      * @param ComputerSystem   $system       Computer system details
      * @param FiscalIdentifier $taxpayer     Taxpayer details (party that issues the invoices)
-     * @param string           $certPath     Path to encrypted PEM certificate or PKCS#12 bundle
+     * @param string           $certPath     Path to encrypted PEM certificate or PKCS#12 (PFX) bundle
      * @param string|null      $certPassword Certificate password or `null` for none
      */
     public function __construct(
