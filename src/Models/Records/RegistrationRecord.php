@@ -55,6 +55,15 @@ class RegistrationRecord extends Record {
     public ?CorrectiveType $correctiveType = null;
 
     /**
+     * Listado de facturas rectificadas
+     *
+     * @var InvoiceIdentifier[]
+     *
+     * @field FacturasRectificadas
+     */
+    public array $correctedInvoices = [];
+
+    /**
      * Desglose de la factura
      *
      * @var BreakdownDetails[]
@@ -160,7 +169,7 @@ class RegistrationRecord extends Record {
     }
 
     #[Assert\Callback]
-    final public function validateCorrectiveType(ExecutionContextInterface $context): void {
+    final public function validateCorrectiveDetails(ExecutionContextInterface $context): void {
         if (!isset($this->invoiceType)) {
             return;
         }
@@ -172,6 +181,8 @@ class RegistrationRecord extends Record {
             InvoiceType::R4,
             InvoiceType::R5,
         ], true);
+
+        // Corrective type
         if ($isCorrective && $this->correctiveType === null) {
             $context->buildViolation('Missing type for corrective invoice')
                 ->atPath('correctiveType')
@@ -179,6 +190,13 @@ class RegistrationRecord extends Record {
         } elseif (!$isCorrective && $this->correctiveType !== null) {
             $context->buildViolation('This type of invoice cannot have a corrective type')
                 ->atPath('correctiveType')
+                ->addViolation();
+        }
+
+        // Corrected invoices
+        if (!$isCorrective && count($this->correctedInvoices) > 0) {
+            $context->buildViolation('This type of invoice cannot have corrected invoices')
+                ->atPath('correctedInvoices')
                 ->addViolation();
         }
     }

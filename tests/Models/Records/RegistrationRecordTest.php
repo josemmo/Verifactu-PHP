@@ -178,7 +178,7 @@ final class RegistrationRecordTest extends TestCase {
         $record->validate();
     }
 
-    public function testValidatesCorrectiveType(): void {
+    public function testValidatesCorrectiveDetails(): void {
         $record = new RegistrationRecord();
         $record->invoiceId = new InvoiceIdentifier();
         $record->invoiceId->issuerId = 'A00000000';
@@ -222,10 +222,22 @@ final class RegistrationRecordTest extends TestCase {
             $this->assertStringContainsString('This type of invoice cannot have a corrective type', $e->getMessage());
         }
 
-        // Throws no exception
+        // Valid corrective type
         $record->invoiceType = InvoiceType::R2;
         $record->correctiveType = CorrectiveType::Substitution;
         $record->hash = $record->calculateHash();
         $record->validate();
+
+        // Unnecessary corrected invoices
+        $record->invoiceType = InvoiceType::Factura;
+        $record->correctiveType = null;
+        $record->correctedInvoices[0] = new InvoiceIdentifier('A00000000', 'PRUEBA-0001', new DateTimeImmutable());
+        $record->hash = $record->calculateHash();
+        try {
+            $record->validate();
+            $this->fail('Did not throw exception for unnecessary corrected invoices');
+        } catch (InvalidModelException $e) {
+            $this->assertStringContainsString('This type of invoice cannot have corrected invoices', $e->getMessage());
+        }
     }
 }
