@@ -191,10 +191,10 @@ class AeatClient {
         if (count($record->correctedInvoices) > 0) {
             $facturasRectificadasElement = $recordElement->add('sum1:FacturasRectificadas');
             foreach ($record->correctedInvoices as $correctedInvoice) {
-                $facturasRectificadaElement = $facturasRectificadasElement->add('sum1:IDFacturaRectificada');
-                $facturasRectificadaElement->add('sum1:IDEmisorFactura', $correctedInvoice->issuerId);
-                $facturasRectificadaElement->add('sum1:NumSerieFactura', $correctedInvoice->invoiceNumber);
-                $facturasRectificadaElement->add('sum1:FechaExpedicionFactura', $correctedInvoice->issueDate->format('d-m-Y'));
+                $facturaRectificadaElement = $facturasRectificadasElement->add('sum1:IDFacturaRectificada');
+                $facturaRectificadaElement->add('sum1:IDEmisorFactura', $correctedInvoice->issuerId);
+                $facturaRectificadaElement->add('sum1:NumSerieFactura', $correctedInvoice->invoiceNumber);
+                $facturaRectificadaElement->add('sum1:FechaExpedicionFactura', $correctedInvoice->issueDate->format('d-m-Y'));
             }
         }
 
