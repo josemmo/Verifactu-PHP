@@ -6,11 +6,9 @@ use josemmo\Verifactu\Models\Records\BreakdownDetails;
 use josemmo\Verifactu\Models\Records\OperationType;
 use josemmo\Verifactu\Models\Records\RegimeType;
 use josemmo\Verifactu\Models\Records\TaxType;
-use PHPUnit\Framework\Attributes\DoesNotPerformAssertions;
 use PHPUnit\Framework\TestCase;
 
 final class BreakdownDetailsTest extends TestCase {
-    #[DoesNotPerformAssertions]
     public function testValidatesTaxAmount(): void {
         $details = new BreakdownDetails();
         $details->taxType = TaxType::IVA;
@@ -29,7 +27,7 @@ final class BreakdownDetailsTest extends TestCase {
             $details->validate();
             $this->fail('Did not throw exception for invalid tax amount');
         } catch (InvalidModelException $e) {
-            // Expected, ignore
+            $this->assertStringContainsString('Expected tax amount of 2.36, got 99.99', $e->getMessage());
         }
 
         // Acceptable tax amount differences

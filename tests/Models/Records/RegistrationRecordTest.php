@@ -14,7 +14,6 @@ use josemmo\Verifactu\Models\Records\OperationType;
 use josemmo\Verifactu\Models\Records\RegimeType;
 use josemmo\Verifactu\Models\Records\RegistrationRecord;
 use josemmo\Verifactu\Models\Records\TaxType;
-use PHPUnit\Framework\Attributes\DoesNotPerformAssertions;
 use PHPUnit\Framework\TestCase;
 
 final class RegistrationRecordTest extends TestCase {
@@ -73,7 +72,6 @@ final class RegistrationRecordTest extends TestCase {
         $record->validate();
     }
 
-    #[DoesNotPerformAssertions]
     public function testValidatesTotalAmounts(): void {
         $record = new RegistrationRecord();
         $record->invoiceId = new InvoiceIdentifier();
@@ -114,7 +112,7 @@ final class RegistrationRecordTest extends TestCase {
             $record->validate();
             $this->fail('Did not throw exception for total tax amount validation');
         } catch (InvalidModelException $e) {
-            // Expected, ignore
+            $this->assertStringContainsString('Expected total tax amount of 56.90, got 56.91', $e->getMessage());
         }
         $record->totalTaxAmount = '56.90';
 
@@ -130,11 +128,10 @@ final class RegistrationRecordTest extends TestCase {
             $record->validate();
             $this->fail('Did not throw exception for total tax amount validation');
         } catch (InvalidModelException $e) {
-            // Expected, ignore
+            $this->assertStringContainsString('Expected total amount of 612.45, got 1.23', $e->getMessage());
         }
     }
 
-    #[DoesNotPerformAssertions]
     public function testValidatesRecipients(): void {
         $record = new RegistrationRecord();
         $record->invoiceId = new InvoiceIdentifier();
@@ -163,7 +160,7 @@ final class RegistrationRecordTest extends TestCase {
             $record->validate();
             $this->fail('Did not throw exception for missing recipient validation');
         } catch (InvalidModelException $e) {
-            // Expected, ignore
+            $this->assertStringContainsString('This type of invoice requires at least one recipient', $e->getMessage());
         }
 
         // Should pass validation with Spanish identifiers

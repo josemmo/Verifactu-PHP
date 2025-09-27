@@ -5,11 +5,9 @@ use DateTimeImmutable;
 use josemmo\Verifactu\Exceptions\InvalidModelException;
 use josemmo\Verifactu\Models\Records\CancellationRecord;
 use josemmo\Verifactu\Models\Records\InvoiceIdentifier;
-use PHPUnit\Framework\Attributes\DoesNotPerformAssertions;
 use PHPUnit\Framework\TestCase;
 
 final class CancellationRecordTest extends TestCase {
-    #[DoesNotPerformAssertions]
     public function testRequiresPreviousInvoice(): void {
         $record = new CancellationRecord();
         $record->invoiceId = new InvoiceIdentifier();
@@ -24,7 +22,8 @@ final class CancellationRecordTest extends TestCase {
             $record->validate();
             $this->fail('Did not throw exception for missing previous invoice');
         } catch (InvalidModelException $e) {
-            // Expected, ignore
+            $this->assertStringContainsString('Previous invoice ID is required', $e->getMessage());
+            $this->assertStringContainsString('Previous hash is required', $e->getMessage());
         }
 
         $record->previousInvoiceId = new InvoiceIdentifier();
@@ -36,7 +35,7 @@ final class CancellationRecordTest extends TestCase {
             $record->validate();
             $this->fail('Did not throw exception for missing previous hash');
         } catch (InvalidModelException $e) {
-            // Expected, ignore
+            $this->assertStringContainsString('Previous hash is required', $e->getMessage());
         }
     }
 
