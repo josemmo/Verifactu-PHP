@@ -6,6 +6,7 @@ use GuzzleHttp\Exception\GuzzleException;
 use josemmo\Verifactu\Models\ComputerSystem;
 use josemmo\Verifactu\Models\Records\CancellationRecord;
 use josemmo\Verifactu\Models\Records\FiscalIdentifier;
+use josemmo\Verifactu\Models\Records\OperationType;
 use josemmo\Verifactu\Models\Records\RegistrationRecord;
 use UXML\UXML;
 
@@ -238,9 +239,11 @@ class AeatClient {
             $detalleDesgloseElement->add('sum1:Impuesto', $breakdownDetails->taxType->value);
             $detalleDesgloseElement->add('sum1:ClaveRegimen', $breakdownDetails->regimeType->value);
             $detalleDesgloseElement->add('sum1:CalificacionOperacion', $breakdownDetails->operationType->value);
-            $detalleDesgloseElement->add('sum1:TipoImpositivo', $breakdownDetails->taxRate);
             $detalleDesgloseElement->add('sum1:BaseImponibleOimporteNoSujeto', $breakdownDetails->baseAmount);
-            $detalleDesgloseElement->add('sum1:CuotaRepercutida', $breakdownDetails->taxAmount);
+            if (OperationType::N1 !== $breakdownDetails->operationType && OperationType::N2 !== $breakdownDetails->operationType) {
+                $detalleDesgloseElement->add('sum1:TipoImpositivo', $breakdownDetails->taxRate);
+                $detalleDesgloseElement->add('sum1:CuotaRepercutida', $breakdownDetails->taxAmount);
+            }
         }
 
         $recordElement->add('sum1:CuotaTotal', $record->totalTaxAmount);
