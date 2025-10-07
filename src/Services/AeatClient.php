@@ -235,13 +235,16 @@ class AeatClient {
 
         $desgloseElement = $recordElement->add('sum1:Desglose');
         foreach ($record->breakdown as $breakdownDetails) {
+            $isExempt = (OperationType::N1 === $breakdownDetails->operationType || OperationType::N2 === $breakdownDetails->operationType);
             $detalleDesgloseElement = $desgloseElement->add('sum1:DetalleDesglose');
             $detalleDesgloseElement->add('sum1:Impuesto', $breakdownDetails->taxType->value);
             $detalleDesgloseElement->add('sum1:ClaveRegimen', $breakdownDetails->regimeType->value);
             $detalleDesgloseElement->add('sum1:CalificacionOperacion', $breakdownDetails->operationType->value);
-            $detalleDesgloseElement->add('sum1:BaseImponibleOimporteNoSujeto', $breakdownDetails->baseAmount);
-            if (OperationType::N1 !== $breakdownDetails->operationType && OperationType::N2 !== $breakdownDetails->operationType) {
+            if (!isExempt) {
                 $detalleDesgloseElement->add('sum1:TipoImpositivo', $breakdownDetails->taxRate);
+            }
+            $detalleDesgloseElement->add('sum1:BaseImponibleOimporteNoSujeto', $breakdownDetails->baseAmount);
+            if (!isExempt) {
                 $detalleDesgloseElement->add('sum1:CuotaRepercutida', $breakdownDetails->taxAmount);
             }
         }
