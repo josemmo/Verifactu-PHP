@@ -22,6 +22,7 @@ class AeatClient {
     private ?FiscalIdentifier $representative = null;
     private readonly Client $client;
     private bool $isProduction = true;
+    private bool $isIncidencia = false;
 
     /**
      * Class constructor
@@ -75,6 +76,11 @@ class AeatClient {
         return $this;
     }
 
+    public function setIncidencia(bool $incidencia): static {
+        $this->isIncidencia = $incidencia;
+        return $this;
+    }
+
     /**
      * Send registration records
      *
@@ -120,6 +126,9 @@ class AeatClient {
             $representanteElement->add('sum1:NombreRazon', $this->representative->name);
             $representanteElement->add('sum1:NIF', $this->representative->nif);
         }
+
+        $remisionVoluntariaElement = $cabeceraElement->add('sum1:RemisionVoluntaria');
+        $remisionVoluntariaElement->add('sum1:Incidencia', $this->isIncidencia ? 'S':'N');
 
         // Add registration records
         foreach ($records as $record) {
