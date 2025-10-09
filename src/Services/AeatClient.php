@@ -22,7 +22,7 @@ class AeatClient {
     private ?FiscalIdentifier $representative = null;
     private readonly Client $client;
     private bool $isProduction = true;
-    private ?string $lastSentXml = null;
+    private ?UXML $lastSentXml = null;
 
     /**
      * Class constructor
@@ -164,7 +164,7 @@ class AeatClient {
 
         // Send request
         $xmlString = $xml->asXML();
-        $this->lastSentXml = $xmlString; // Store for retrieval
+        $this->lastSentXml = $xml; // Store for retrieval
         
         $response = $this->client->post('/wlpl/TIKE-CONT/ws/SistemaFacturacion/VerifactuSOAP', [
             'base_uri' => $this->getBaseUri(),
@@ -182,7 +182,7 @@ class AeatClient {
      * @return string|null The XML string sent in the last request, or null if no request has been made
      */
     public function getLastSentXml(): ?string {
-        return $this->lastSentXml;
+        return $this->lastSentXml?->asXML();
     }
 
     /**
