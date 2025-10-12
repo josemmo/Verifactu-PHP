@@ -185,6 +185,7 @@ class AeatClient {
         $idFacturaElement->add('sum1:FechaExpedicionFactura', $record->invoiceId->issueDate->format('d-m-Y'));
 
         $recordElement->add('sum1:NombreRazonEmisor', $record->issuerName);
+        $recordElement->add('sum1:Subsanacion', $record->isCorrection ? 'S' : 'N');
         $recordElement->add('sum1:TipoFactura', $record->invoiceType->value);
 
         if ($record->correctiveType !== null) {

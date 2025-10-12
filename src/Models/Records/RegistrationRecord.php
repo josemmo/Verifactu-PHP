@@ -11,6 +11,14 @@ use Symfony\Component\Validator\Context\ExecutionContextInterface;
  */
 class RegistrationRecord extends Record {
     /**
+     * Indicador de subsanación de un registro de facturación de alta previamente generado
+     *
+     * @field Subsanacion
+     */
+    #[Assert\Type('boolean')]
+    public bool $isCorrection = false;
+
+    /**
      * Nombre-razón social del obligado a expedir la factura
      *
      * @field NombreRazonEmisor
