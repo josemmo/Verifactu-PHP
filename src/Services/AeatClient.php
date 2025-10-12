@@ -237,10 +237,17 @@ class AeatClient {
             $detalleDesgloseElement = $desgloseElement->add('sum1:DetalleDesglose');
             $detalleDesgloseElement->add('sum1:Impuesto', $breakdownDetails->taxType->value);
             $detalleDesgloseElement->add('sum1:ClaveRegimen', $breakdownDetails->regimeType->value);
-            $detalleDesgloseElement->add('sum1:CalificacionOperacion', $breakdownDetails->operationType->value);
-            $detalleDesgloseElement->add('sum1:TipoImpositivo', $breakdownDetails->taxRate);
+            $detalleDesgloseElement->add(
+                $breakdownDetails->operationType->isExempt() ? 'sum1:OperacionExenta' : 'sum1:CalificacionOperacion',
+                $breakdownDetails->operationType->value,
+            );
+            if ($breakdownDetails->taxRate !== null) {
+                $detalleDesgloseElement->add('sum1:TipoImpositivo', $breakdownDetails->taxRate);
+            }
             $detalleDesgloseElement->add('sum1:BaseImponibleOimporteNoSujeto', $breakdownDetails->baseAmount);
-            $detalleDesgloseElement->add('sum1:CuotaRepercutida', $breakdownDetails->taxAmount);
+            if ($breakdownDetails->taxAmount !== null) {
+                $detalleDesgloseElement->add('sum1:CuotaRepercutida', $breakdownDetails->taxAmount);
+            }
         }
 
         $recordElement->add('sum1:CuotaTotal', $record->totalTaxAmount);

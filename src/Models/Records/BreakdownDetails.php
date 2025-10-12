@@ -28,21 +28,13 @@ class BreakdownDetails extends Model {
     public RegimeType $regimeType;
 
     /**
-     * Clave de la operación sujeta y no exenta o de la operación no sujeta
+     * Clave de la operación sujeta y no exenta, clave de la operación no sujeta, o causa de la exención
      *
      * @field CalificacionOperacion
+     * @field OperacionExenta
      */
     #[Assert\NotBlank]
     public OperationType $operationType;
-
-    /**
-     * Porcentaje aplicado sobre la base imponible para calcular la cuota
-     *
-     * @field TipoImpositivo
-     */
-    #[Assert\NotBlank]
-    #[Assert\Regex(pattern: '/^\d{1,3}\.\d{2}$/')]
-    public string $taxRate;
 
     /**
      * Magnitud dineraria sobre la que se aplica el tipo impositivo / Importe no sujeto
@@ -54,17 +46,55 @@ class BreakdownDetails extends Model {
     public string $baseAmount;
 
     /**
+     * Porcentaje aplicado sobre la base imponible para calcular la cuota
+     *
+     * @field TipoImpositivo
+     */
+    #[Assert\Regex(pattern: '/^\d{1,3}\.\d{2}$/')]
+    public ?string $taxRate = null;
+
+    /**
      * Cuota resultante de aplicar a la base imponible el tipo impositivo
      *
      * @field CuotaRepercutida
      */
-    #[Assert\NotBlank]
     #[Assert\Regex(pattern: '/^-?\d{1,12}\.\d{2}$/')]
-    public string $taxAmount;
+    public ?string $taxAmount = null;
+
+    #[Assert\Callback]
+    final public function validateOperationType(ExecutionContextInterface $context): void {
+        if (!isset($this->operationType)) {
+            return;
+        }
+
+        if ($this->operationType->isSubject()) {
+            if ($this->taxRate === null) {
+                $context->buildViolation('Tax rate must be defined for subject operation types')
+                    ->atPath('taxRate')
+                    ->addViolation();
+            }
+            if ($this->taxAmount === null) {
+                $context->buildViolation('Tax amount must be defined for subject operation types')
+                    ->atPath('taxAmount')
+                    ->addViolation();
+            }
+        } else {
+            if ($this->taxRate !== null) {
+                $context->buildViolation('Tax rate cannot be defined for non-subject or exempt operation types')
+                    ->atPath('taxRate')
+                    ->addViolation();
+            }
+            if ($this->taxAmount !== null) {
+                $context->buildViolation('Tax amount cannot be defined for non-subject or exempt operation types')
+                    ->atPath('taxAmount')
+                    ->addViolation();
+            }
+        }
+    }
 
     #[Assert\Callback]
     final public function validateTaxAmount(ExecutionContextInterface $context): void {
-        if (!isset($this->taxRate) || !isset($this->baseAmount) || !isset($this->taxAmount)) {
+        if (!isset($this->baseAmount) || $this->taxRate === null || $this->taxAmount === null) {
             return;
         }
 
