@@ -76,22 +76,6 @@ class AeatClient {
     }
 
     /**
-     * Send registration records
-     *
-     * @param RegistrationRecord[] $records Registration records
-     *
-     * @return UXML XML response from web service
-     *
-     * @throws GuzzleException if request failed
-     *
-     * @deprecated 0.0.3 Use the `send()` method instead.
-     * @see AeatClient::send
-     */
-    public function sendRegistrationRecords(array $records): UXML {
-        return $this->send($records);
-    }
-
-    /**
      * Send invoicing records
      *
      * @param (RegistrationRecord|CancellationRecord)[] $records Invoicing records
