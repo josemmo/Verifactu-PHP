@@ -254,6 +254,9 @@ class AeatClient {
         $idFacturaElement->add('sum1:IDEmisorFacturaAnulada', $record->invoiceId->issuerId);
         $idFacturaElement->add('sum1:NumSerieFacturaAnulada', $record->invoiceId->invoiceNumber);
         $idFacturaElement->add('sum1:FechaExpedicionFacturaAnulada', $record->invoiceId->issueDate->format('d-m-Y'));
+        if ($record->withoutPriorRecord) {
+            $recordElement->add('sum1:SinRegistroPrevio', 'S');
+        }
     }
 
     /**
