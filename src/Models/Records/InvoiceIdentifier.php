@@ -59,4 +59,18 @@ class InvoiceIdentifier extends Model {
      */
     #[Assert\NotBlank]
     public DateTimeImmutable $issueDate;
+
+    /**
+     * Comprueba que el otro identificador tenga los mismos valores que este.
+     * 
+     * NOTE: Time part will be ignored.
+     * 
+     * @param InvoiceIdentifier $other El otro identificador con el que realizar la comparación.
+     * @return bool true si son iguales o false si son diferentes.
+     */
+    public function equals(InvoiceIdentifier $other): bool {
+        return $this->invoiceNumber === $other->invoiceNumber
+                && $this->issuerId === $other->issuerId
+                && $this->issueDate->setTime(0,0) == $other->issueDate->setTime(0,0);
+    }
 }
