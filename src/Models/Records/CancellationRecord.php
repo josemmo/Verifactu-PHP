@@ -11,6 +11,14 @@ use Symfony\Component\Validator\Context\ExecutionContextInterface;
  */
 class CancellationRecord extends Record {
     /**
+     * Indicador que especifica que se trata de la anulación de un registro que no existe en la AEAT o en el SIF.
+     *
+     * @field SinRegistroPrevio
+     */
+    #[Assert\Type('boolean')]
+    public bool $withoutPriorRecord = false;
+
+    /**
      * @inheritDoc
      */
     public function calculateHash(): string {

@@ -7,6 +7,7 @@ use josemmo\Verifactu\Models\ComputerSystem;
 use josemmo\Verifactu\Models\Records\CancellationRecord;
 use josemmo\Verifactu\Models\Records\FiscalIdentifier;
 use josemmo\Verifactu\Models\Records\RegistrationRecord;
+use josemmo\Verifactu\Models\Responses\AeatResponse;
 use UXML\UXML;
 
 /**
@@ -77,31 +78,15 @@ class AeatClient {
     }
 
     /**
-     * Send registration records
-     *
-     * @param RegistrationRecord[] $records Registration records
-     *
-     * @return UXML XML response from web service
-     *
-     * @throws GuzzleException if request failed
-     *
-     * @deprecated 0.0.3 Use the `send()` method instead.
-     * @see AeatClient::send
-     */
-    public function sendRegistrationRecords(array $records): UXML {
-        return $this->send($records);
-    }
-
-    /**
      * Send invoicing records
      *
      * @param (RegistrationRecord|CancellationRecord)[] $records Invoicing records
      *
-     * @return UXML XML response from web service
+     * @return AeatResponse Response from service
      *
      * @throws GuzzleException if request failed
      */
-    public function send(array $records): UXML {
+    public function send(array $records): AeatResponse {
         // Build initial request
         $xml = UXML::newInstance('soapenv:Envelope', null, [
             'xmlns:soapenv' => self::NS_SOAPENV,
@@ -173,7 +158,10 @@ class AeatClient {
             ],
             'body' => $xmlString,
         ]);
-        return UXML::fromString($response->getBody()->getContents());
+
+        // Parse and return response
+        $xmlResponse = UXML::fromString($response->getBody()->getContents());
+        return AeatResponse::from($xmlResponse);
     }
     
     /**
@@ -198,6 +186,7 @@ class AeatClient {
         $idFacturaElement->add('sum1:FechaExpedicionFactura', $record->invoiceId->issueDate->format('d-m-Y'));
 
         $recordElement->add('sum1:NombreRazonEmisor', $record->issuerName);
+        $recordElement->add('sum1:Subsanacion', $record->isCorrection ? 'S' : 'N');
         $recordElement->add('sum1:TipoFactura', $record->invoiceType->value);
 
         if ($record->correctiveType !== null) {
@@ -250,10 +239,17 @@ class AeatClient {
             $detalleDesgloseElement = $desgloseElement->add('sum1:DetalleDesglose');
             $detalleDesgloseElement->add('sum1:Impuesto', $breakdownDetails->taxType->value);
             $detalleDesgloseElement->add('sum1:ClaveRegimen', $breakdownDetails->regimeType->value);
-            $detalleDesgloseElement->add('sum1:CalificacionOperacion', $breakdownDetails->operationType->value);
-            $detalleDesgloseElement->add('sum1:TipoImpositivo', $breakdownDetails->taxRate);
+            $detalleDesgloseElement->add(
+                $breakdownDetails->operationType->isExempt() ? 'sum1:OperacionExenta' : 'sum1:CalificacionOperacion',
+                $breakdownDetails->operationType->value,
+            );
+            if ($breakdownDetails->taxRate !== null) {
+                $detalleDesgloseElement->add('sum1:TipoImpositivo', $breakdownDetails->taxRate);
+            }
             $detalleDesgloseElement->add('sum1:BaseImponibleOimporteNoSujeto', $breakdownDetails->baseAmount);
-            $detalleDesgloseElement->add('sum1:CuotaRepercutida', $breakdownDetails->taxAmount);
+            if ($breakdownDetails->taxAmount !== null) {
+                $detalleDesgloseElement->add('sum1:CuotaRepercutida', $breakdownDetails->taxAmount);
+            }
         }
 
         $recordElement->add('sum1:CuotaTotal', $record->totalTaxAmount);
@@ -271,6 +267,9 @@ class AeatClient {
         $idFacturaElement->add('sum1:IDEmisorFacturaAnulada', $record->invoiceId->issuerId);
         $idFacturaElement->add('sum1:NumSerieFacturaAnulada', $record->invoiceId->invoiceNumber);
         $idFacturaElement->add('sum1:FechaExpedicionFacturaAnulada', $record->invoiceId->issueDate->format('d-m-Y'));
+        if ($record->withoutPriorRecord) {
+            $recordElement->add('sum1:SinRegistroPrevio', 'S');
+        }
     }
 
     /**

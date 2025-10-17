@@ -13,9 +13,9 @@ final class BreakdownDetailsTest extends TestCase {
         $details = new BreakdownDetails();
         $details->taxType = TaxType::IVA;
         $details->regimeType = RegimeType::C01;
-        $details->operationType = OperationType::S1;
-        $details->taxRate = '21.00';
+        $details->operationType = OperationType::Subject;
         $details->baseAmount = '11.22';
+        $details->taxRate = '21.00';
         $details->taxAmount = '2.36';
 
         // Should pass validation
@@ -34,6 +34,25 @@ final class BreakdownDetailsTest extends TestCase {
         $details->taxAmount = '2.35';
         $details->validate();
         $details->taxAmount = '2.37';
+        $details->validate();
+    }
+
+    public function testValidatesOperationType(): void {
+        $details = new BreakdownDetails();
+        $details->taxType = TaxType::IVA;
+        $details->regimeType = RegimeType::C01;
+        $details->operationType = OperationType::Subject;
+        $details->baseAmount = '100.00';
+        try {
+            $details->validate();
+            $this->fail('Did not throw exception for missing tax rate and amount');
+        } catch (InvalidModelException $e) {
+            $this->assertStringContainsString('Tax rate must be defined for subject operation types', $e->getMessage());
+            $this->assertStringContainsString('Tax amount must be defined for subject operation types', $e->getMessage());
+        }
+
+        // Correct operation type
+        $details->operationType = OperationType::ExemptByOther;
         $details->validate();
     }
 }
