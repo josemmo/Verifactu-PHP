@@ -24,7 +24,7 @@ class AeatClient {
     private readonly Client $client;
     private bool $isProduction = true;
     private ?UXML $lastSentXml = null;
-    private ?Response $lastReceivedResponse = null;
+    private ?string $lastReceivedXml = null;
 
     /**
      * Class constructor
@@ -159,9 +159,10 @@ class AeatClient {
         // Store for retrieval, allowing consumers to access the XML of the last request and response
         // for auditing purposes
         $this->lastSentXml = $xml;
-        $this->lastReceivedResponse = $response;
+        $responseXmlString = $response->getBody()->getContents();
+        $this->lastReceivedXml = $responseXmlString;
         
-        $xmlResponse = UXML::fromString($response->getBody()->getContents());
+        $xmlResponse = UXML::fromString($responseXmlString);
         return AeatResponse::from($xmlResponse);
     }
     
@@ -180,7 +181,7 @@ class AeatClient {
      * @return string|null The XML string received in the last response, or null if no response has been received
      */
     public function getLastReceivedXml(): ?string {
-        return $this->getBody()->getContents();
+        return $this->lastReceivedXml;
     }
 
     /**
