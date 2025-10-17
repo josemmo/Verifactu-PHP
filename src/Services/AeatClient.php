@@ -3,11 +3,14 @@ namespace josemmo\Verifactu\Services;
 
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\GuzzleException;
+use GuzzleHttp\Promise\PromiseInterface;
 use josemmo\Verifactu\Models\ComputerSystem;
 use josemmo\Verifactu\Models\Records\CancellationRecord;
 use josemmo\Verifactu\Models\Records\FiscalIdentifier;
 use josemmo\Verifactu\Models\Records\RegistrationRecord;
 use josemmo\Verifactu\Models\Responses\AeatResponse;
+use Psr\Http\Message\ResponseInterface;
+use SensitiveParameter;
 use UXML\UXML;
 
 /**
@@ -20,34 +23,46 @@ class AeatClient {
 
     private readonly ComputerSystem $system;
     private readonly FiscalIdentifier $taxpayer;
-    private ?FiscalIdentifier $representative = null;
     private readonly Client $client;
+    private ?string $certificatePath = null;
+    private ?string $certificatePassword = null;
+    private ?FiscalIdentifier $representative = null;
     private bool $isProduction = true;
 
     /**
      * Class constructor
      *
-     * NOTE: The certificate path must have the ".p12" extension to be recognized as a PFX bundle.
-     *
-     * @param ComputerSystem   $system       Computer system details
-     * @param FiscalIdentifier $taxpayer     Taxpayer details (party that issues the invoices)
-     * @param string           $certPath     Path to encrypted PEM certificate or PKCS#12 (PFX) bundle
-     * @param string|null      $certPassword Certificate password or `null` for none
+     * @param ComputerSystem   $system     Computer system details
+     * @param FiscalIdentifier $taxpayer   Taxpayer details (party that issues the invoices)
+     * @param Client|null      $httpClient Custom HTTP client, leave empty to create a new one
      */
     public function __construct(
         ComputerSystem $system,
         FiscalIdentifier $taxpayer,
-        string $certPath,
-        ?string $certPassword = null,
+        ?Client $httpClient = null,
     ) {
         $this->system = $system;
         $this->taxpayer = $taxpayer;
-        $this->client = new Client([
-            'cert' => ($certPassword === null) ? $certPath : [$certPath, $certPassword],
-            'headers' => [
-                'User-Agent' => "Mozilla/5.0 (compatible; {$system->name}/{$system->version})",
-            ],
-        ]);
+        $this->client = $httpClient ?? new Client();
+    }
+
+    /**
+     * Set certificate
+     *
+     * NOTE: The certificate path must have the ".p12" extension to be recognized as a PFX bundle.
+     *
+     * @param string      $certificatePath     Path to encrypted PEM certificate or PKCS#12 (PFX) bundle
+     * @param string|null $certificatePassword Certificate password or `null` for none
+     *
+     * @return $this This instance
+     */
+    public function setCertificate(
+        #[SensitiveParameter] string $certificatePath,
+        #[SensitiveParameter] ?string $certificatePassword = null,
+    ): static {
+        $this->certificatePath = $certificatePath;
+        $this->certificatePassword = $certificatePassword;
+        return $this;
     }
 
     /**
@@ -81,11 +96,11 @@ class AeatClient {
      *
      * @param (RegistrationRecord|CancellationRecord)[] $records Invoicing records
      *
-     * @return AeatResponse Response from service
+     * @return PromiseInterface<AeatResponse> Response from service
      *
      * @throws GuzzleException if request failed
      */
-    public function send(array $records): AeatResponse {
+    public function send(array $records): PromiseInterface { /** @phpstan-ignore generics.notGeneric */
         // Build initial request
         $xml = UXML::newInstance('soapenv:Envelope', null, [
             'xmlns:soapenv' => self::NS_SOAPENV,
@@ -112,17 +127,26 @@ class AeatClient {
         }
 
         // Send request
-        $response = $this->client->post('/wlpl/TIKE-CONT/ws/SistemaFacturacion/VerifactuSOAP', [
+        $options = [
             'base_uri' => $this->getBaseUri(),
             'headers' => [
                 'Content-Type' => 'text/xml',
+                'User-Agent' => "Mozilla/5.0 (compatible; {$this->system->name}/{$this->system->version})",
             ],
             'body' => $xml->asXML(),
-        ]);
+        ];
+        if ($this->certificatePath !== null) {
+            $options['cert'] = ($this->certificatePassword === null) ?
+                $this->certificatePath :
+                [$this->certificatePath, $this->certificatePassword];
+        }
+        $responsePromise = $this->client->postAsync('/wlpl/TIKE-CONT/ws/SistemaFacturacion/VerifactuSOAP', $options);
 
         // Parse and return response
-        $xmlResponse = UXML::fromString($response->getBody()->getContents());
-        return AeatResponse::from($xmlResponse);
+        return $responsePromise
+            ->then(fn (ResponseInterface $response): string => $response->getBody()->getContents())
+            ->then(fn (string $response): UXML => UXML::fromString($response))
+            ->then(fn (UXML $xml): AeatResponse => AeatResponse::from($xml));
     }
 
     /**

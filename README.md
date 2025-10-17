@@ -71,14 +71,10 @@ $system->validate();
 
 // Crea un cliente para el webservice de la AEAT
 $taxpayer = new FiscalIdentifier('Perico de los Palotes, S.A.', 'A00000000');
-$client = new AeatClient(
-    $system,
-    $taxpayer,
-    __DIR__ . '/certificado.pfx',
-    'contraseña',
-);
+$client = new AeatClient($system, $taxpayer);
+$client->setCertificate(__DIR__ . '/certificado.pfx', 'contraseña');
 $client->setProduction(false); // <-- para usar el entorno de preproducción
-$res = $client->send([$record]);
+$res = $client->send([$record])->wait();
 
 // Obtiene la respuesta
 echo $res->asXML() . "\n";
