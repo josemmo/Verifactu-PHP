@@ -3,6 +3,7 @@ namespace josemmo\Verifactu\Models\Records;
 
 use Symfony\Component\Validator\Constraints as Assert;
 use Symfony\Component\Validator\Context\ExecutionContextInterface;
+use UXML\UXML;
 
 /**
  * Registro de alta de una factura
@@ -270,5 +271,92 @@ class RegistrationRecord extends Record {
                 ->atPath('replacedInvoices')
                 ->addViolation();
         }
+    }
+
+    /**
+     * @inheritDoc
+     */
+    protected function getRecordElementName(): string {
+        return 'RegistroAlta';
+    }
+
+    /**
+     * @inheritDoc
+     */
+    protected function exportCustomProperties(UXML $recordElement): void {
+        $idFacturaElement = $recordElement->add('sum1:IDFactura');
+        $idFacturaElement->add('sum1:IDEmisorFactura', $this->invoiceId->issuerId);
+        $idFacturaElement->add('sum1:NumSerieFactura', $this->invoiceId->invoiceNumber);
+        $idFacturaElement->add('sum1:FechaExpedicionFactura', $this->invoiceId->issueDate->format('d-m-Y'));
+
+        $recordElement->add('sum1:NombreRazonEmisor', $this->issuerName);
+        $recordElement->add('sum1:Subsanacion', $this->isCorrection ? 'S' : 'N');
+        $recordElement->add('sum1:TipoFactura', $this->invoiceType->value);
+
+        if ($this->correctiveType !== null) {
+            $recordElement->add('sum1:TipoRectificativa', $this->correctiveType->value);
+        }
+        if (count($this->correctedInvoices) > 0) {
+            $facturasRectificadasElement = $recordElement->add('sum1:FacturasRectificadas');
+            foreach ($this->correctedInvoices as $correctedInvoice) {
+                $facturaRectificadaElement = $facturasRectificadasElement->add('sum1:IDFacturaRectificada');
+                $facturaRectificadaElement->add('sum1:IDEmisorFactura', $correctedInvoice->issuerId);
+                $facturaRectificadaElement->add('sum1:NumSerieFactura', $correctedInvoice->invoiceNumber);
+                $facturaRectificadaElement->add('sum1:FechaExpedicionFactura', $correctedInvoice->issueDate->format('d-m-Y'));
+            }
+        }
+        if (count($this->replacedInvoices) > 0) {
+            $facturasSustituidasElement = $recordElement->add('sum1:FacturasSustituidas');
+            foreach ($this->replacedInvoices as $replacedInvoice) {
+                $facturaSustituidaElement = $facturasSustituidasElement->add('sum1:IDFacturaSustituida');
+                $facturaSustituidaElement->add('sum1:IDEmisorFactura', $replacedInvoice->issuerId);
+                $facturaSustituidaElement->add('sum1:NumSerieFactura', $replacedInvoice->invoiceNumber);
+                $facturaSustituidaElement->add('sum1:FechaExpedicionFactura', $replacedInvoice->issueDate->format('d-m-Y'));
+            }
+        }
+        if ($this->correctedBaseAmount !== null && $this->correctedTaxAmount !== null) {
+            $importeRectificacionElement = $recordElement->add('sum1:ImporteRectificacion');
+            $importeRectificacionElement->add('sum1:BaseRectificada', $this->correctedBaseAmount);
+            $importeRectificacionElement->add('sum1:CuotaRectificada', $this->correctedTaxAmount);
+        }
+
+        $recordElement->add('sum1:DescripcionOperacion', $this->description);
+
+        if (count($this->recipients) > 0) {
+            $destinatariosElement = $recordElement->add('sum1:Destinatarios');
+            foreach ($this->recipients as $recipient) {
+                $destinatarioElement = $destinatariosElement->add('sum1:IDDestinatario');
+                $destinatarioElement->add('sum1:NombreRazon', $recipient->name);
+                if ($recipient instanceof FiscalIdentifier) {
+                    $destinatarioElement->add('sum1:NIF', $recipient->nif);
+                } else {
+                    $idOtroElement = $destinatarioElement->add('sum1:IDOtro');
+                    $idOtroElement->add('sum1:CodigoPais', $recipient->country);
+                    $idOtroElement->add('sum1:IDType', $recipient->type->value);
+                    $idOtroElement->add('sum1:ID', $recipient->value);
+                }
+            }
+        }
+
+        $desgloseElement = $recordElement->add('sum1:Desglose');
+        foreach ($this->breakdown as $breakdownDetails) {
+            $detalleDesgloseElement = $desgloseElement->add('sum1:DetalleDesglose');
+            $detalleDesgloseElement->add('sum1:Impuesto', $breakdownDetails->taxType->value);
+            $detalleDesgloseElement->add('sum1:ClaveRegimen', $breakdownDetails->regimeType->value);
+            $detalleDesgloseElement->add(
+                $breakdownDetails->operationType->isExempt() ? 'sum1:OperacionExenta' : 'sum1:CalificacionOperacion',
+                $breakdownDetails->operationType->value,
+            );
+            if ($breakdownDetails->taxRate !== null) {
+                $detalleDesgloseElement->add('sum1:TipoImpositivo', $breakdownDetails->taxRate);
+            }
+            $detalleDesgloseElement->add('sum1:BaseImponibleOimporteNoSujeto', $breakdownDetails->baseAmount);
+            if ($breakdownDetails->taxAmount !== null) {
+                $detalleDesgloseElement->add('sum1:CuotaRepercutida', $breakdownDetails->taxAmount);
+            }
+        }
+
+        $recordElement->add('sum1:CuotaTotal', $this->totalTaxAmount);
+        $recordElement->add('sum1:ImporteTotal', $this->totalAmount);
     }
 }

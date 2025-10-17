@@ -3,11 +3,14 @@ namespace josemmo\Verifactu\Services;
 
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\GuzzleException;
+use GuzzleHttp\Promise\PromiseInterface;
 use josemmo\Verifactu\Models\ComputerSystem;
 use josemmo\Verifactu\Models\Records\CancellationRecord;
 use josemmo\Verifactu\Models\Records\FiscalIdentifier;
 use josemmo\Verifactu\Models\Records\RegistrationRecord;
 use josemmo\Verifactu\Models\Responses\AeatResponse;
+use Psr\Http\Message\ResponseInterface;
+use SensitiveParameter;
 use UXML\UXML;
 
 /**
@@ -20,8 +23,10 @@ class AeatClient {
 
     private readonly ComputerSystem $system;
     private readonly FiscalIdentifier $taxpayer;
-    private ?FiscalIdentifier $representative = null;
     private readonly Client $client;
+    private ?string $certificatePath = null;
+    private ?string $certificatePassword = null;
+    private ?FiscalIdentifier $representative = null;
     private bool $isProduction = true;
     private ?UXML $lastSentXml = null;
     private ?string $lastReceivedXml = null;
@@ -29,27 +34,37 @@ class AeatClient {
     /**
      * Class constructor
      *
-     * NOTE: The certificate path must have the ".p12" extension to be recognized as a PFX bundle.
-     *
-     * @param ComputerSystem   $system       Computer system details
-     * @param FiscalIdentifier $taxpayer     Taxpayer details (party that issues the invoices)
-     * @param string           $certPath     Path to encrypted PEM certificate or PKCS#12 (PFX) bundle
-     * @param string|null      $certPassword Certificate password or `null` for none
+     * @param ComputerSystem   $system     Computer system details
+     * @param FiscalIdentifier $taxpayer   Taxpayer details (party that issues the invoices)
+     * @param Client|null      $httpClient Custom HTTP client, leave empty to create a new one
      */
     public function __construct(
         ComputerSystem $system,
         FiscalIdentifier $taxpayer,
-        string $certPath,
-        ?string $certPassword = null,
+        ?Client $httpClient = null,
     ) {
         $this->system = $system;
         $this->taxpayer = $taxpayer;
-        $this->client = new Client([
-            'cert' => ($certPassword === null) ? $certPath : [$certPath, $certPassword],
-            'headers' => [
-                'User-Agent' => "Mozilla/5.0 (compatible; {$system->name}/{$system->version})",
-            ],
-        ]);
+        $this->client = $httpClient ?? new Client();
+    }
+
+    /**
+     * Set certificate
+     *
+     * NOTE: The certificate path must have the ".p12" extension to be recognized as a PFX bundle.
+     *
+     * @param string      $certificatePath     Path to encrypted PEM certificate or PKCS#12 (PFX) bundle
+     * @param string|null $certificatePassword Certificate password or `null` for none
+     *
+     * @return $this This instance
+     */
+    public function setCertificate(
+        #[SensitiveParameter] string $certificatePath,
+        #[SensitiveParameter] ?string $certificatePassword = null,
+    ): static {
+        $this->certificatePath = $certificatePath;
+        $this->certificatePassword = $certificatePassword;
+        return $this;
     }
 
     /**
@@ -83,11 +98,11 @@ class AeatClient {
      *
      * @param (RegistrationRecord|CancellationRecord)[] $records Invoicing records
      *
-     * @return AeatResponse Response from service
+     * @return PromiseInterface<AeatResponse> Response from service
      *
      * @throws GuzzleException if request failed
      */
-    public function send(array $records): AeatResponse {
+    public function send(array $records): PromiseInterface { /** @phpstan-ignore generics.notGeneric */
         // Build initial request
         $xml = UXML::newInstance('soapenv:Envelope', null, [
             'xmlns:soapenv' => self::NS_SOAPENV,
@@ -110,62 +125,39 @@ class AeatClient {
 
         // Add registration records
         foreach ($records as $record) {
-            $isRegistrationRecord = $record instanceof RegistrationRecord;
-            $recordElementName = $isRegistrationRecord ? 'RegistroAlta' : 'RegistroAnulacion';
-            $recordElement = $baseElement->add('sum:RegistroFactura')->add("sum1:$recordElementName");
-            $recordElement->add('sum1:IDVersion', '1.0');
-
-            if ($isRegistrationRecord) {
-                $this->addRegistrationRecordProperties($recordElement, $record);
-            } else {
-                $this->addCancellationRecordProperties($recordElement, $record);
-            }
-
-            $encadenamientoElement = $recordElement->add('sum1:Encadenamiento');
-            if ($record->previousInvoiceId === null) {
-                $encadenamientoElement->add('sum1:PrimerRegistro', 'S');
-            } else {
-                $registroAnteriorElement = $encadenamientoElement->add('sum1:RegistroAnterior');
-                $registroAnteriorElement->add('sum1:IDEmisorFactura', $record->previousInvoiceId->issuerId);
-                $registroAnteriorElement->add('sum1:NumSerieFactura', $record->previousInvoiceId->invoiceNumber);
-                $registroAnteriorElement->add('sum1:FechaExpedicionFactura', $record->previousInvoiceId->issueDate->format('d-m-Y'));
-                $registroAnteriorElement->add('sum1:Huella', $record->previousHash);
-            }
-
-            $sistemaInformaticoElement = $recordElement->add('sum1:SistemaInformatico');
-            $sistemaInformaticoElement->add('sum1:NombreRazon', $this->system->vendorName);
-            $sistemaInformaticoElement->add('sum1:NIF', $this->system->vendorNif);
-            $sistemaInformaticoElement->add('sum1:NombreSistemaInformatico', $this->system->name);
-            $sistemaInformaticoElement->add('sum1:IdSistemaInformatico', $this->system->id);
-            $sistemaInformaticoElement->add('sum1:Version', $this->system->version);
-            $sistemaInformaticoElement->add('sum1:NumeroInstalacion', $this->system->installationNumber);
-            $sistemaInformaticoElement->add('sum1:TipoUsoPosibleSoloVerifactu', $this->system->onlySupportsVerifactu ? 'S' : 'N');
-            $sistemaInformaticoElement->add('sum1:TipoUsoPosibleMultiOT', $this->system->supportsMultipleTaxpayers ? 'S' : 'N');
-            $sistemaInformaticoElement->add('sum1:IndicadorMultiplesOT', $this->system->hasMultipleTaxpayers ? 'S' : 'N');
-
-            $recordElement->add('sum1:FechaHoraHusoGenRegistro', $record->hashedAt->format('c'));
-            $recordElement->add('sum1:TipoHuella', '01'); // SHA-256
-            $recordElement->add('sum1:Huella', $record->hash);
+            $record->export($baseElement->add('sum:RegistroFactura'), $this->system);
         }
-        
-        $response = $this->client->post('/wlpl/TIKE-CONT/ws/SistemaFacturacion/VerifactuSOAP', [
+
+        // Store sent XML for retrieval (for auditing purposes)
+        $this->lastSentXml = $xml;
+
+        // Send request
+        $options = [
             'base_uri' => $this->getBaseUri(),
             'headers' => [
                 'Content-Type' => 'text/xml',
+                'User-Agent' => "Mozilla/5.0 (compatible; {$this->system->name}/{$this->system->version})",
             ],
             'body' => $xml->asXML(),
-        ]);
+        ];
+        if ($this->certificatePath !== null) {
+            $options['cert'] = ($this->certificatePassword === null) ?
+                $this->certificatePath :
+                [$this->certificatePath, $this->certificatePassword];
+        }
+        $responsePromise = $this->client->postAsync('/wlpl/TIKE-CONT/ws/SistemaFacturacion/VerifactuSOAP', $options);
 
-        // Store for retrieval, allowing consumers to access the XML of the last request and response
-        // for auditing purposes
-        $this->lastSentXml = $xml;
-        $responseXmlString = $response->getBody()->getContents();
-        $this->lastReceivedXml = $responseXmlString;
-        
-        $xmlResponse = UXML::fromString($responseXmlString);
-        return AeatResponse::from($xmlResponse);
+        // Parse and return response
+        return $responsePromise
+            ->then(fn (ResponseInterface $response): string => $response->getBody()->getContents())
+            ->then(function (string $response): UXML {
+                // Store received XML for retrieval (for auditing purposes)
+                $this->lastReceivedXml = $response;
+                return UXML::fromString($response);
+            })
+            ->then(fn (UXML $xml): AeatResponse => AeatResponse::from($xml));
     }
-    
+
     /**
      * Get the last XML sent to AEAT
      *
@@ -182,105 +174,6 @@ class AeatClient {
      */
     public function getLastReceivedXml(): ?string {
         return $this->lastReceivedXml;
-    }
-
-    /**
-     * Add registration record properties
-     *
-     * @param UXML               $recordElement Element to fill
-     * @param RegistrationRecord $record        Registration record instance
-     */
-    private function addRegistrationRecordProperties(UXML $recordElement, RegistrationRecord $record): void {
-        $idFacturaElement = $recordElement->add('sum1:IDFactura');
-        $idFacturaElement->add('sum1:IDEmisorFactura', $record->invoiceId->issuerId);
-        $idFacturaElement->add('sum1:NumSerieFactura', $record->invoiceId->invoiceNumber);
-        $idFacturaElement->add('sum1:FechaExpedicionFactura', $record->invoiceId->issueDate->format('d-m-Y'));
-
-        $recordElement->add('sum1:NombreRazonEmisor', $record->issuerName);
-        $recordElement->add('sum1:Subsanacion', $record->isCorrection ? 'S' : 'N');
-        $recordElement->add('sum1:TipoFactura', $record->invoiceType->value);
-
-        if ($record->correctiveType !== null) {
-            $recordElement->add('sum1:TipoRectificativa', $record->correctiveType->value);
-        }
-        if (count($record->correctedInvoices) > 0) {
-            $facturasRectificadasElement = $recordElement->add('sum1:FacturasRectificadas');
-            foreach ($record->correctedInvoices as $correctedInvoice) {
-                $facturaRectificadaElement = $facturasRectificadasElement->add('sum1:IDFacturaRectificada');
-                $facturaRectificadaElement->add('sum1:IDEmisorFactura', $correctedInvoice->issuerId);
-                $facturaRectificadaElement->add('sum1:NumSerieFactura', $correctedInvoice->invoiceNumber);
-                $facturaRectificadaElement->add('sum1:FechaExpedicionFactura', $correctedInvoice->issueDate->format('d-m-Y'));
-            }
-        }
-        if (count($record->replacedInvoices) > 0) {
-            $facturasSustituidasElement = $recordElement->add('sum1:FacturasSustituidas');
-            foreach ($record->replacedInvoices as $replacedInvoice) {
-                $facturaSustituidaElement = $facturasSustituidasElement->add('sum1:IDFacturaSustituida');
-                $facturaSustituidaElement->add('sum1:IDEmisorFactura', $replacedInvoice->issuerId);
-                $facturaSustituidaElement->add('sum1:NumSerieFactura', $replacedInvoice->invoiceNumber);
-                $facturaSustituidaElement->add('sum1:FechaExpedicionFactura', $replacedInvoice->issueDate->format('d-m-Y'));
-            }
-        }
-        if ($record->correctedBaseAmount !== null && $record->correctedTaxAmount !== null) {
-            $importeRectificacionElement = $recordElement->add('sum1:ImporteRectificacion');
-            $importeRectificacionElement->add('sum1:BaseRectificada', $record->correctedBaseAmount);
-            $importeRectificacionElement->add('sum1:CuotaRectificada', $record->correctedTaxAmount);
-        }
-
-        $recordElement->add('sum1:DescripcionOperacion', $record->description);
-
-        if (count($record->recipients) > 0) {
-            $destinatariosElement = $recordElement->add('sum1:Destinatarios');
-            foreach ($record->recipients as $recipient) {
-                $destinatarioElement = $destinatariosElement->add('sum1:IDDestinatario');
-                $destinatarioElement->add('sum1:NombreRazon', $recipient->name);
-                if ($recipient instanceof FiscalIdentifier) {
-                    $destinatarioElement->add('sum1:NIF', $recipient->nif);
-                } else {
-                    $idOtroElement = $destinatarioElement->add('sum1:IDOtro');
-                    $idOtroElement->add('sum1:CodigoPais', $recipient->country);
-                    $idOtroElement->add('sum1:IDType', $recipient->type->value);
-                    $idOtroElement->add('sum1:ID', $recipient->value);
-                }
-            }
-        }
-
-        $desgloseElement = $recordElement->add('sum1:Desglose');
-        foreach ($record->breakdown as $breakdownDetails) {
-            $detalleDesgloseElement = $desgloseElement->add('sum1:DetalleDesglose');
-            $detalleDesgloseElement->add('sum1:Impuesto', $breakdownDetails->taxType->value);
-            $detalleDesgloseElement->add('sum1:ClaveRegimen', $breakdownDetails->regimeType->value);
-            $detalleDesgloseElement->add(
-                $breakdownDetails->operationType->isExempt() ? 'sum1:OperacionExenta' : 'sum1:CalificacionOperacion',
-                $breakdownDetails->operationType->value,
-            );
-            if ($breakdownDetails->taxRate !== null) {
-                $detalleDesgloseElement->add('sum1:TipoImpositivo', $breakdownDetails->taxRate);
-            }
-            $detalleDesgloseElement->add('sum1:BaseImponibleOimporteNoSujeto', $breakdownDetails->baseAmount);
-            if ($breakdownDetails->taxAmount !== null) {
-                $detalleDesgloseElement->add('sum1:CuotaRepercutida', $breakdownDetails->taxAmount);
-            }
-        }
-
-        $recordElement->add('sum1:CuotaTotal', $record->totalTaxAmount);
-        $recordElement->add('sum1:ImporteTotal', $record->totalAmount);
-    }
-
-    /**
-     * Add cancellation record properties
-     *
-     * @param UXML               $recordElement Element to fill
-     * @param CancellationRecord $record        Cancellation record instance
-     */
-    private function addCancellationRecordProperties(UXML $recordElement, CancellationRecord $record): void {
-        $idFacturaElement = $recordElement->add('sum1:IDFactura');
-        $idFacturaElement->add('sum1:IDEmisorFacturaAnulada', $record->invoiceId->issuerId);
-        $idFacturaElement->add('sum1:NumSerieFacturaAnulada', $record->invoiceId->invoiceNumber);
-        $idFacturaElement->add('sum1:FechaExpedicionFacturaAnulada', $record->invoiceId->issueDate->format('d-m-Y'));
-        if ($record->withoutPriorRecord) {
-            $recordElement->add('sum1:SinRegistroPrevio', 'S');
-        }
     }
 
     /**

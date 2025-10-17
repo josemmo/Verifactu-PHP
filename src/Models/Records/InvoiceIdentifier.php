@@ -59,4 +59,17 @@ class InvoiceIdentifier extends Model {
      */
     #[Assert\NotBlank]
     public DateTimeImmutable $issueDate;
+
+    /**
+     * Compare instance against another invoice identifier
+     *
+     * @param InvoiceIdentifier $other Other invoice identifier
+     *
+     * @return boolean Whether instances are equal
+     */
+    public function equals(InvoiceIdentifier $other): bool {
+        return $this->issuerId === $other->issuerId
+            && $this->invoiceNumber === $other->invoiceNumber
+            && $this->issueDate->format('Y-m-d') === $other->issueDate->format('Y-m-d');
+    }
 }
