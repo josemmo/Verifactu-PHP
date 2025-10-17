@@ -3,6 +3,7 @@ namespace josemmo\Verifactu\Models\Records;
 
 use Symfony\Component\Validator\Constraints as Assert;
 use Symfony\Component\Validator\Context\ExecutionContextInterface;
+use UXML\UXML;
 
 /**
  * Registro de anulación de una factura
@@ -42,6 +43,27 @@ class CancellationRecord extends Record {
             $context->buildViolation('Previous hash is required for all cancellation records')
                 ->atPath('previousHash')
                 ->addViolation();
+        }
+    }
+
+    /**
+     * @inheritDoc
+     */
+    protected function getRecordElementName(): string {
+        return 'RegistroAnulacion';
+    }
+
+    /**
+     * @inheritDoc
+     */
+    protected function exportCustomProperties(UXML $recordElement): void {
+        $idFacturaElement = $recordElement->add('sum1:IDFactura');
+        $idFacturaElement->add('sum1:IDEmisorFacturaAnulada', $this->invoiceId->issuerId);
+        $idFacturaElement->add('sum1:NumSerieFacturaAnulada', $this->invoiceId->invoiceNumber);
+        $idFacturaElement->add('sum1:FechaExpedicionFacturaAnulada', $this->invoiceId->issueDate->format('d-m-Y'));
+
+        if ($this->withoutPriorRecord) {
+            $recordElement->add('sum1:SinRegistroPrevio', 'S');
         }
     }
 }

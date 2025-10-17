@@ -2,9 +2,11 @@
 namespace josemmo\Verifactu\Models\Records;
 
 use DateTimeImmutable;
+use josemmo\Verifactu\Models\ComputerSystem;
 use josemmo\Verifactu\Models\Model;
 use Symfony\Component\Validator\Constraints as Assert;
 use Symfony\Component\Validator\Context\ExecutionContextInterface;
+use UXML\UXML;
 
 /**
  * Base invoice record
@@ -81,4 +83,58 @@ abstract class Record extends Model {
                 ->addViolation();
         }
     }
+
+    /**
+     * Export record to XML
+     *
+     * @param UXML           $xml    UXML instance
+     * @param ComputerSystem $system Computer system information
+     */
+    public function export(UXML $xml, ComputerSystem $system): void {
+        $recordElementName = $this->getRecordElementName();
+        $recordElement = $xml->add("sum1:$recordElementName");
+        $recordElement->add('sum1:IDVersion', '1.0');
+
+        $this->exportCustomProperties($recordElement);
+
+        $encadenamientoElement = $recordElement->add('sum1:Encadenamiento');
+        if ($this->previousInvoiceId === null) {
+            $encadenamientoElement->add('sum1:PrimerRegistro', 'S');
+        } else {
+            $registroAnteriorElement = $encadenamientoElement->add('sum1:RegistroAnterior');
+            $registroAnteriorElement->add('sum1:IDEmisorFactura', $this->previousInvoiceId->issuerId);
+            $registroAnteriorElement->add('sum1:NumSerieFactura', $this->previousInvoiceId->invoiceNumber);
+            $registroAnteriorElement->add('sum1:FechaExpedicionFactura', $this->previousInvoiceId->issueDate->format('d-m-Y'));
+            $registroAnteriorElement->add('sum1:Huella', $this->previousHash);
+        }
+
+        $sistemaInformaticoElement = $recordElement->add('sum1:SistemaInformatico');
+        $sistemaInformaticoElement->add('sum1:NombreRazon', $system->vendorName);
+        $sistemaInformaticoElement->add('sum1:NIF', $system->vendorNif);
+        $sistemaInformaticoElement->add('sum1:NombreSistemaInformatico', $system->name);
+        $sistemaInformaticoElement->add('sum1:IdSistemaInformatico', $system->id);
+        $sistemaInformaticoElement->add('sum1:Version', $system->version);
+        $sistemaInformaticoElement->add('sum1:NumeroInstalacion', $system->installationNumber);
+        $sistemaInformaticoElement->add('sum1:TipoUsoPosibleSoloVerifactu', $system->onlySupportsVerifactu ? 'S' : 'N');
+        $sistemaInformaticoElement->add('sum1:TipoUsoPosibleMultiOT', $system->supportsMultipleTaxpayers ? 'S' : 'N');
+        $sistemaInformaticoElement->add('sum1:IndicadorMultiplesOT', $system->hasMultipleTaxpayers ? 'S' : 'N');
+
+        $recordElement->add('sum1:FechaHoraHusoGenRegistro', $this->hashedAt->format('c'));
+        $recordElement->add('sum1:TipoHuella', '01'); // SHA-256
+        $recordElement->add('sum1:Huella', $this->hash);
+    }
+
+    /**
+     * Get record element name
+     *
+     * @return string XML element name
+     */
+    abstract protected function getRecordElementName(): string;
+
+    /**
+     * Export custom record properties to XML
+     *
+     * @param UXML $recordElement Record element
+     */
+    abstract protected function exportCustomProperties(UXML $recordElement): void;
 }
