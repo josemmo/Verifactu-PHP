@@ -60,6 +60,16 @@ abstract class Record extends Model {
     abstract public function calculateHash(): string;
 
     #[Assert\Callback]
+    final public function validateHash(ExecutionContextInterface $context): void {
+        $expectedHash = $this->calculateHash();
+        if ($this->hash !== $expectedHash) {
+            $context->buildViolation("Invalid hash, expected value $expectedHash")
+                ->atPath('hash')
+                ->addViolation();
+        }
+    }
+
+    #[Assert\Callback]
     final public function validatePreviousInvoice(ExecutionContextInterface $context): void {
         if ($this->previousInvoiceId !== null && $this->previousHash === null) {
             $context->buildViolation('Previous hash is required if previous invoice ID is provided')
