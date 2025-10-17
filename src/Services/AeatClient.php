@@ -151,7 +151,7 @@ class AeatClient {
         return $responsePromise
             ->then(fn (ResponseInterface $response): string => $response->getBody()->getContents())
             ->then(function (string $response): UXML {
-                // Store received XML for retrieval (for auditing purposes)
+                // Store received XML for retrieval
                 $this->lastReceivedXml = $response;
                 return UXML::fromString($response);
             })
