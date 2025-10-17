@@ -147,20 +147,19 @@ class AeatClient {
             $recordElement->add('sum1:TipoHuella', '01'); // SHA-256
             $recordElement->add('sum1:Huella', $record->hash);
         }
-
-        // Send request
-        $xmlString = $xml->asXML();
-        $this->lastSentXml = $xml; // Store for retrieval
         
         $response = $this->client->post('/wlpl/TIKE-CONT/ws/SistemaFacturacion/VerifactuSOAP', [
             'base_uri' => $this->getBaseUri(),
             'headers' => [
                 'Content-Type' => 'text/xml',
             ],
-            'body' => $xmlString,
+            'body' => $xml->asXML(),
         ]);
 
-        $this->lastReceivedResponse = $response; // Store for retrieval
+        // Store for retrieval, allowing consumers to access the XML of the last request and response
+        // for auditing purposes
+        $this->lastSentXml = $xml;
+        $this->lastReceivedResponse = $response;
         
         $xmlResponse = UXML::fromString($response->getBody()->getContents());
         return AeatResponse::from($xmlResponse);
