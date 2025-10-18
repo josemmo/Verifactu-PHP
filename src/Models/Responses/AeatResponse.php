@@ -3,9 +3,9 @@ namespace josemmo\Verifactu\Models\Responses;
 
 use DateTimeImmutable;
 use DateTimeInterface;
+use josemmo\Verifactu\Exceptions\AeatException;
 use josemmo\Verifactu\Models\Model;
 use josemmo\Verifactu\Models\Records\InvoiceIdentifier;
-use RuntimeException;
 use Symfony\Component\Validator\Constraints as Assert;
 use UXML\UXML;
 
@@ -26,7 +26,7 @@ class AeatResponse extends Model {
      *
      * @return AeatResponse Parsed response
      *
-     * @throws RuntimeException if failed to parse response
+     * @throws AeatException if server returned an error or failed to parse response
      */
     public static function from(UXML $xml): self {
         $nsEnv = self::NS_ENV;
@@ -34,10 +34,16 @@ class AeatResponse extends Model {
         $nsTik = self::NS_TIK;
         $instance = new self();
 
+        // Handle server errors
+        $faultElement = $xml->get("{{$nsEnv}}Body/{{$nsEnv}}Fault/faultstring");
+        if ($faultElement !== null) {
+            throw new AeatException($faultElement->asText());
+        }
+
         // Get root XML element
         $rootXml = $xml->get("{{$nsEnv}}Body/{{$nsTikr}}RespuestaRegFactuSistemaFacturacion");
         if ($rootXml === null) {
-            throw new RuntimeException('Missing <tikR:RespuestaRegFactuSistemaFacturacion /> element from response');
+            throw new AeatException('Missing <tikR:RespuestaRegFactuSistemaFacturacion /> element from response');
         }
 
         // Parse CSV
@@ -51,7 +57,7 @@ class AeatResponse extends Model {
         if ($submittedAtElement !== null) {
             $submittedAt = DateTimeImmutable::createFromFormat(DateTimeInterface::ISO8601, $submittedAtElement->asText());
             if ($submittedAt === false) {
-                throw new RuntimeException('Invalid submitted at date: ' . $submittedAtElement->asText());
+                throw new AeatException('Invalid submitted at date: ' . $submittedAtElement->asText());
             }
             $instance->submittedAt = $submittedAt;
         }
@@ -90,7 +96,7 @@ class AeatResponse extends Model {
             if ($issueDateElement !== null) {
                 $issueDate = DateTimeImmutable::createFromFormat('d-m-Y', $issueDateElement->asText());
                 if ($issueDate === false) {
-                    throw new RuntimeException('Invalid invoice issue date: ' . $issueDateElement->asText());
+                    throw new AeatException('Invalid invoice issue date: ' . $issueDateElement->asText());
                 }
                 $item->invoiceId->issueDate = $issueDate->setTime(0, 0, 0, 0);
             }

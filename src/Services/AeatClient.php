@@ -4,6 +4,7 @@ namespace josemmo\Verifactu\Services;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\GuzzleException;
 use GuzzleHttp\Promise\PromiseInterface;
+use josemmo\Verifactu\Exceptions\AeatException;
 use josemmo\Verifactu\Models\ComputerSystem;
 use josemmo\Verifactu\Models\Records\CancellationRecord;
 use josemmo\Verifactu\Models\Records\FiscalIdentifier;
@@ -98,7 +99,8 @@ class AeatClient {
      *
      * @return PromiseInterface<AeatResponse> Response from service
      *
-     * @throws GuzzleException if request failed
+     * @throws AeatException   if AEAT server returned an error
+     * @throws GuzzleException if request sending failed
      */
     public function send(array $records): PromiseInterface { /** @phpstan-ignore generics.notGeneric */
         // Build initial request

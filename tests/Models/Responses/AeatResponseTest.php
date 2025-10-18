@@ -1,6 +1,7 @@
 <?php
 namespace josemmo\Verifactu\Tests\Models;
 
+use josemmo\Verifactu\Exceptions\AeatException;
 use josemmo\Verifactu\Models\Responses\AeatResponse;
 use josemmo\Verifactu\Models\Responses\ItemStatus;
 use josemmo\Verifactu\Models\Responses\RecordType;
@@ -144,5 +145,25 @@ final class AeatResponseTest extends TestCase {
         $this->assertEquals(ItemStatus::Incorrect, $response->items[0]->status);
         $this->assertEquals('3002', $response->items[0]->errorCode);
         $this->assertEquals('No existe el registro de facturación.', $response->items[0]->errorDescription);
+    }
+
+    public function testHandlesServerErrors(): void {
+        $xml = UXML::fromString(<<<XML
+        <?xml version="1.0" encoding="UTF-8"?>
+        <env:Envelope xmlns:env="http://schemas.xmlsoap.org/soap/envelope/">
+            <env:Body>
+                <env:Fault>
+                    <faultcode>env:Server</faultcode>
+                    <faultstring>Codigo[20009].Error interno en el servidor</faultstring>
+                </env:Fault>
+            </env:Body>
+        </env:Envelope>
+        XML);
+        try {
+            AeatResponse::from($xml);
+            $this->fail('Did not throw exception for server error response');
+        } catch (AeatException $e) {
+            $this->assertStringContainsString('Codigo[20009].Error interno en el servidor', $e->getMessage());
+        }
     }
 }
