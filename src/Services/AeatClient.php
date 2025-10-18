@@ -29,6 +29,8 @@ class AeatClient {
     private ?string $certificatePassword = null;
     private ?FiscalIdentifier $representative = null;
     private bool $isProduction = true;
+    private ?UXML $lastSentXml = null;
+    private ?string $lastReceivedXml = null;
 
     /**
      * Class constructor
@@ -128,6 +130,9 @@ class AeatClient {
             $record->export($baseElement->add('sum:RegistroFactura'), $this->system);
         }
 
+        // Store sent XML for retrieval (for auditing purposes)
+        $this->lastSentXml = $xml;
+
         // Send request
         $options = [
             'base_uri' => $this->getBaseUri(),
@@ -147,8 +152,30 @@ class AeatClient {
         // Parse and return response
         return $responsePromise
             ->then(fn (ResponseInterface $response): string => $response->getBody()->getContents())
-            ->then(fn (string $response): UXML => UXML::fromString($response))
+            ->then(function (string $response): UXML {
+                // Store received XML for retrieval
+                $this->lastReceivedXml = $response;
+                return UXML::fromString($response);
+            })
             ->then(fn (UXML $xml): AeatResponse => AeatResponse::from($xml));
+    }
+
+    /**
+     * Get the last XML sent to AEAT
+     *
+     * @return string|null The XML string sent in the last request, or null if no request has been made
+     */
+    public function getLastSentXml(): ?string {
+        return $this->lastSentXml?->asXML();
+    }
+
+    /**
+     * Get the last XML received from AEAT
+     *
+     * @return string|null The XML string received in the last response, or null if no response has been received
+     */
+    public function getLastReceivedXml(): ?string {
+        return $this->lastReceivedXml;
     }
 
     /**
