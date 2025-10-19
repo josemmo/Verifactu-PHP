@@ -45,7 +45,8 @@ final class VoluntaryDiscontinuationTest extends TestCase {
 
         // Should not throw exception
         $discontinuation->validate();
-        $this->assertTrue(true);
+        $this->assertEquals(new DateTimeImmutable('2024-12-31'), $discontinuation->endDate);
+        $this->assertTrue($discontinuation->incident);
     }
 
     public function testValidationAcceptsBooleanIncident(): void {
