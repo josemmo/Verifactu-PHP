@@ -9,6 +9,7 @@ use josemmo\Verifactu\Models\ComputerSystem;
 use josemmo\Verifactu\Models\Records\CancellationRecord;
 use josemmo\Verifactu\Models\Records\FiscalIdentifier;
 use josemmo\Verifactu\Models\Records\RegistrationRecord;
+use josemmo\Verifactu\Models\Records\VoluntaryDiscontinuation;
 use josemmo\Verifactu\Models\Responses\AeatResponse;
 use Psr\Http\Message\ResponseInterface;
 use SensitiveParameter;
@@ -28,6 +29,7 @@ class AeatClient {
     private ?string $certificatePath = null;
     private ?string $certificatePassword = null;
     private ?FiscalIdentifier $representative = null;
+    private ?VoluntaryDiscontinuation $voluntaryDiscontinuation = null;
     private bool $isProduction = true;
 
     /**
@@ -41,10 +43,12 @@ class AeatClient {
         ComputerSystem $system,
         FiscalIdentifier $taxpayer,
         ?Client $httpClient = null,
+        ?VoluntaryDiscontinuation $voluntaryDiscontinuation = null,
     ) {
         $this->system = $system;
         $this->taxpayer = $taxpayer;
         $this->client = $httpClient ?? new Client();
+        $this->voluntaryDiscontinuation = $voluntaryDiscontinuation;
     }
 
     /**
@@ -121,6 +125,11 @@ class AeatClient {
             $representanteElement = $cabeceraElement->add('sum1:Representante');
             $representanteElement->add('sum1:NombreRazon', $this->representative->name);
             $representanteElement->add('sum1:NIF', $this->representative->nif);
+        }
+        if($this->voluntaryDiscontinuation !== null && $this->voluntaryDiscontinuation->endDate !== null) {
+            $remisionVoluntariaElement = $cabeceraElement->add('sum1:RemisionVoluntaria');
+            $remisionVoluntariaElement->add('sum1:FechaFinVeriFactu', $this->voluntaryDiscontinuation->endDate->format('d-m-Y'));
+            $remisionVoluntariaElement->add('sum1:Incidencia', $this->voluntaryDiscontinuation->incident ? 'S' : 'N');
         }
 
         // Add registration records
