@@ -28,6 +28,7 @@ use josemmo\Verifactu\Models\Records\OperationType;
 use josemmo\Verifactu\Models\Records\RegimeType;
 use josemmo\Verifactu\Models\Records\RegistrationRecord;
 use josemmo\Verifactu\Models\Records\TaxType;
+use josemmo\Verifactu\Models\Records\VoluntaryDiscontinuation;
 use josemmo\Verifactu\Services\AeatClient;
 
 require __DIR__ . '/vendor/autoload.php';
@@ -79,6 +80,44 @@ $res = $client->send([$record])->wait();
 // Obtiene la respuesta
 echo $res->asXML() . "\n";
 ```
+
+## Remisión Voluntaria (Voluntary Discontinuation)
+
+La librería también soporta la funcionalidad de **Remisión Voluntaria** que permite notificar a la AEAT cuando una empresa decide dejar de usar VERI*FACTU.
+
+### Ejemplo de uso de Remisión Voluntaria
+
+```php
+<?php
+use josemmo\Verifactu\Models\Records\VoluntaryDiscontinuation;
+use josemmo\Verifactu\Services\AeatClient;
+
+// Crea una remisión voluntaria
+$discontinuation = new VoluntaryDiscontinuation();
+$discontinuation->endDate = new DateTimeImmutable('2025-12-31'); // Debe ser a finales del año contable
+$discontinuation->incident = false; // true si el motivo del cese voluntario es por una incidencia
+$discontinuation->validate();
+
+// Configura el cliente con la remisión voluntaria
+$client = new AeatClient($system, $taxpayer, null, $discontinuation);
+$client->setCertificate(__DIR__ . '/certificado.pfx', 'contraseña');
+$client->setProduction(false);
+
+// Envía la remisión (no se requieren registros de facturación)
+$res = $client->send([])->wait();
+echo $res->asXML() . "\n";
+```
+
+### Parámetros de Remisión Voluntaria
+
+- **`endDate`**: Fecha en la que la empresa dejará de usar VERI*FACTU. **Debe ser a finales del año contable actual** según indica la AEAT.
+- **`incident`**: Indica si la razón de la remisión es una incidencia (`true`) o es voluntaria (`false`).
+
+### Notas importantes
+
+- La remisión voluntaria debe enviarse **antes** de la fecha de fin especificada
+- Una vez llega la fecha de remisión, el SIF no debería de volver a enviar facturas a VERI*FACTU a no ser que el cliente vuelva a activarlo de forma voluntaria.
+- La fecha de fin debe ser a finales del año contable actual (31 de diciembre)
 
 ## Exención de responsabilidad
 Esta librería se proporciona sin una declaración responsable al no ser un Sistema Informático de Facturación (SIF).
