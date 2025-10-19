@@ -126,7 +126,7 @@ class AeatClient {
             $representanteElement->add('sum1:NombreRazon', $this->representative->name);
             $representanteElement->add('sum1:NIF', $this->representative->nif);
         }
-        if($this->voluntaryDiscontinuation !== null && $this->voluntaryDiscontinuation->endDate !== null) {
+        if ($this->voluntaryDiscontinuation !== null && $this->voluntaryDiscontinuation->endDate !== null) {
             $remisionVoluntariaElement = $cabeceraElement->add('sum1:RemisionVoluntaria');
             $remisionVoluntariaElement->add('sum1:FechaFinVeriFactu', $this->voluntaryDiscontinuation->endDate->format('d-m-Y'));
             $remisionVoluntariaElement->add('sum1:Incidencia', $this->voluntaryDiscontinuation->incident ? 'S' : 'N');

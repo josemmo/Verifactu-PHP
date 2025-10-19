@@ -15,7 +15,7 @@ class VoluntaryDiscontinuation extends Model {
     /**
      * Class constructor
      *
-     * @param DateTimeImmutable|null $endDate When the company will stop using VERI*FACTU. As the AEAT says, this date should be at the end of the year.
+     * @param DateTimeImmutable|null $endDate  When the company will stop using VERI*FACTU. As the AEAT says, this date should be at the end of the year.
      * @param bool|null              $incident Whether the reason of the voluntary discontinuation is an incident or not (Default: false)
      */
     public function __construct(
