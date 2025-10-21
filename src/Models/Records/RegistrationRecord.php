@@ -145,7 +145,14 @@ class RegistrationRecord extends Record {
             if (!isset($details->taxAmount) || !isset($details->baseAmount)) {
                 return;
             }
+            // Sum IVA tax amount
             $expectedTotalTaxAmount += $details->taxAmount;
+            
+            // Also add surcharge amount if present (Recargo de Equivalencia)
+            if (isset($details->surchargeAmount)) {
+                $expectedTotalTaxAmount += $details->surchargeAmount;
+            }
+            
             $totalBaseAmount += $details->baseAmount;
         }
 
