@@ -397,4 +397,119 @@ final class RegistrationRecordTest extends TestCase {
         </container>
         XML, $xml->asXML());
     }
+
+    public function testValidatesCorrectionFields(): void {
+        $record = new RegistrationRecord();
+        $record->invoiceId = new InvoiceIdentifier();
+        $record->invoiceId->issuerId = 'A00000000';
+        $record->invoiceId->invoiceNumber = 'TEST-0001';
+        $record->invoiceId->issueDate = new DateTimeImmutable('2025-06-01');
+        $record->issuerName = 'Perico de los Palotes, S.A.';
+        $record->invoiceType = InvoiceType::Simplificada;
+        $record->description = 'Factura de prueba con subsanación';
+        $record->breakdown[0] = new BreakdownDetails();
+        $record->breakdown[0]->taxType = TaxType::IVA;
+        $record->breakdown[0]->regimeType = RegimeType::C01;
+        $record->breakdown[0]->operationType = OperationType::S1;
+        $record->breakdown[0]->taxRate = '21.00';
+        $record->breakdown[0]->baseAmount = '10.00';
+        $record->breakdown[0]->taxAmount = '2.10';
+        $record->totalTaxAmount = '2.10';
+        $record->totalAmount = '12.10';
+        $record->previousInvoiceId = null;
+        $record->previousHash = null;
+        $record->hashedAt = new DateTimeImmutable('2025-06-01T20:30:40+02:00');
+
+        // Valid: RechazoPrevio='X' with Subsanacion='S'
+        $record->previousRejection = 'X';
+        $record->correction = 'S';
+        $record->hash = $record->calculateHash();
+        $record->validate();
+
+        // Invalid: RechazoPrevio='X' without Subsanacion='S'
+        $record->previousRejection = 'X';
+        $record->correction = 'N';
+        $record->hash = $record->calculateHash();
+        try {
+            $record->validate();
+            $this->fail('Did not throw exception for RechazoPrevio=X without Subsanacion=S');
+        } catch (InvalidModelException $e) {
+            $this->assertStringContainsString('previousRejection can only be "X" if correction is "S"', $e->getMessage());
+        }
+
+        // Invalid: Subsanacion='N' with RechazoPrevio='S'
+        $record->previousRejection = 'S';
+        $record->correction = 'N';
+        $record->hash = $record->calculateHash();
+        try {
+            $record->validate();
+            $this->fail('Did not throw exception for Subsanacion=N with RechazoPrevio=S');
+        } catch (InvalidModelException $e) {
+            $this->assertStringContainsString('correction cannot be "N" if previousRejection is "S" or "X"', $e->getMessage());
+        }
+
+        // Invalid: Subsanacion='S' with RechazoPrevio='N'
+        $record->previousRejection = 'N';
+        $record->correction = 'S';
+        $record->hash = $record->calculateHash();
+        try {
+            $record->validate();
+            $this->fail('Did not throw exception for Subsanacion=S with RechazoPrevio=N');
+        } catch (InvalidModelException $e) {
+            $this->assertStringContainsString('correction can only be "S" if previousRejection is "S" or "X"', $e->getMessage());
+        }
+
+        // Valid: RechazoPrevio='S' with Subsanacion='S'
+        $record->previousRejection = 'S';
+        $record->correction = 'S';
+        $record->hash = $record->calculateHash();
+        $record->validate();
+
+        // Valid: RechazoPrevio='N' with Subsanacion='N'
+        $record->previousRejection = 'N';
+        $record->correction = 'N';
+        $record->hash = $record->calculateHash();
+        $record->validate();
+
+        // Valid: External reference
+        $record->previousRejection = null;
+        $record->correction = null;
+        $record->externalReference = 'EXT-REF-12345';
+        $record->hash = $record->calculateHash();
+        $record->validate();
+    }
+
+    public function testCorrectionFieldsDoNotAffectHash(): void {
+        $record1 = new RegistrationRecord();
+        $record1->invoiceId = new InvoiceIdentifier();
+        $record1->invoiceId->issuerId = 'A00000000';
+        $record1->invoiceId->invoiceNumber = 'TEST-HASH';
+        $record1->invoiceId->issueDate = new DateTimeImmutable('2025-06-01');
+        $record1->issuerName = 'Perico de los Palotes, S.A.';
+        $record1->invoiceType = InvoiceType::Simplificada;
+        $record1->description = 'Test hash independence';
+        $record1->breakdown[0] = new BreakdownDetails();
+        $record1->breakdown[0]->taxType = TaxType::IVA;
+        $record1->breakdown[0]->regimeType = RegimeType::C01;
+        $record1->breakdown[0]->operationType = OperationType::S1;
+        $record1->breakdown[0]->taxRate = '21.00';
+        $record1->breakdown[0]->baseAmount = '10.00';
+        $record1->breakdown[0]->taxAmount = '2.10';
+        $record1->totalTaxAmount = '2.10';
+        $record1->totalAmount = '12.10';
+        $record1->hashedAt = new DateTimeImmutable('2025-06-01T10:20:30+02:00');
+
+        // Record without correction fields
+        $hash1 = $record1->calculateHash();
+
+        // Record with correction fields
+        $record2 = clone $record1;
+        $record2->previousRejection = 'S';
+        $record2->correction = 'S';
+        $record2->externalReference = 'EXT-123';
+        $hash2 = $record2->calculateHash();
+
+        // Hashes should be identical
+        $this->assertEquals($hash1, $hash2, 'Correction fields should not affect hash calculation');
+    }
 }

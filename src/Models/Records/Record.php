@@ -55,6 +55,30 @@ abstract class Record extends Model {
     public DateTimeImmutable $hashedAt;
 
     /**
+     * Indicador de rechazo previo
+     *
+     * @field RechazoPrevio
+     */
+    #[Assert\Choice(choices: ['S', 'N', 'X'])]
+    public ?string $previousRejection = null;
+
+    /**
+     * Indicador de subsanación
+     *
+     * @field Subsanacion
+     */
+    #[Assert\Choice(choices: ['S', 'N'])]
+    public ?string $correction = null;
+
+    /**
+     * Referencia externa
+     *
+     * @field RefExterna
+     */
+    #[Assert\Length(max: 60)]
+    public ?string $externalReference = null;
+
+    /**
      * Calculate record hash
      *
      * @return string Expected record hash
@@ -137,4 +161,28 @@ abstract class Record extends Model {
      * @param UXML $recordElement Record element
      */
     abstract protected function exportCustomProperties(UXML $recordElement): void;
+
+    #[Assert\Callback]
+    final public function validateCorrectionFields(ExecutionContextInterface $context): void {
+        // RechazoPrevio='X' solo si Subsanacion='S'
+        if ($this->previousRejection === 'X' && $this->correction !== 'S') {
+            $context->buildViolation('previousRejection can only be "X" if correction is "S"')
+                ->atPath('previousRejection')
+                ->addViolation();
+        }
+
+        // Subsanacion='N' no puede coexistir con RechazoPrevio='S' o 'X'
+        if ($this->correction === 'N' && in_array($this->previousRejection, ['S', 'X'], true)) {
+            $context->buildViolation('correction cannot be "N" if previousRejection is "S" or "X"')
+                ->atPath('correction')
+                ->addViolation();
+        }
+
+        // Subsanacion='S' requiere RechazoPrevio='S' o 'X' (no puede ser 'N')
+        if ($this->correction === 'S' && $this->previousRejection === 'N') {
+            $context->buildViolation('correction can only be "S" if previousRejection is "S" or "X" (not "N")')
+                ->atPath('correction')
+                ->addViolation();
+        }
+    }
 }

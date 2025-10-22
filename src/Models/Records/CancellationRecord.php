@@ -62,8 +62,19 @@ class CancellationRecord extends Record {
         $idFacturaElement->add('sum1:NumSerieFacturaAnulada', $this->invoiceId->invoiceNumber);
         $idFacturaElement->add('sum1:FechaExpedicionFacturaAnulada', $this->invoiceId->issueDate->format('d-m-Y'));
 
+        // RefExterna goes after IDFactura (position #3 in XSD sequence)
+        if ($this->externalReference !== null) {
+            $recordElement->add('sum1:RefExterna', $this->externalReference);
+        }
+
         if ($this->withoutPriorRecord) {
             $recordElement->add('sum1:SinRegistroPrevio', 'S');
+        }
+
+        // RechazoPrevio goes after SinRegistroPrevio (position #5 in XSD sequence)
+        // Note: Subsanacion is NOT part of RegistroAnulacion schema
+        if ($this->previousRejection !== null) {
+            $recordElement->add('sum1:RechazoPrevio', $this->previousRejection);
         }
     }
 }

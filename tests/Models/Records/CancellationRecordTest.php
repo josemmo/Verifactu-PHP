@@ -126,4 +126,31 @@ final class CancellationRecordTest extends TestCase {
         </container>
         XML, $xml->asXML());
     }
+
+    public function testCorrectionFieldsDoNotAffectHash(): void {
+        $record1 = new CancellationRecord();
+        $record1->invoiceId = new InvoiceIdentifier();
+        $record1->invoiceId->issuerId = '89890001K';
+        $record1->invoiceId->invoiceNumber = 'TEST-HASH';
+        $record1->invoiceId->issueDate = new DateTimeImmutable('2024-01-01');
+        $record1->previousInvoiceId = new InvoiceIdentifier();
+        $record1->previousInvoiceId->issuerId = '89890001K';
+        $record1->previousInvoiceId->invoiceNumber = 'PREV-001';
+        $record1->previousInvoiceId->issueDate = new DateTimeImmutable('2024-01-01');
+        $record1->previousHash = 'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA';
+        $record1->hashedAt = new DateTimeImmutable('2024-01-01T10:20:30+01:00');
+
+        // Record without correction fields
+        $hash1 = $record1->calculateHash();
+
+        // Record with correction fields
+        $record2 = clone $record1;
+        $record2->previousRejection = 'N';
+        $record2->correction = 'N';
+        $record2->externalReference = 'CANCEL-REF-001';
+        $hash2 = $record2->calculateHash();
+
+        // Hashes should be identical
+        $this->assertEquals($hash1, $hash2, 'Correction fields should not affect hash calculation');
+    }
 }

@@ -289,8 +289,24 @@ class RegistrationRecord extends Record {
         $idFacturaElement->add('sum1:NumSerieFactura', $this->invoiceId->invoiceNumber);
         $idFacturaElement->add('sum1:FechaExpedicionFactura', $this->invoiceId->issueDate->format('d-m-Y'));
 
+        // RefExterna goes after IDFactura (position #3 in XSD sequence)
+        if ($this->externalReference !== null) {
+            $recordElement->add('sum1:RefExterna', $this->externalReference);
+        }
+
         $recordElement->add('sum1:NombreRazonEmisor', $this->issuerName);
-        $recordElement->add('sum1:Subsanacion', $this->isCorrection ? 'S' : 'N');
+
+        // Subsanacion and RechazoPrevio go after NombreRazonEmisor (positions #5 and #6)
+        if ($this->correction !== null) {
+            $recordElement->add('sum1:Subsanacion', $this->correction);
+        } else {
+            // Default value for backward compatibility
+            $recordElement->add('sum1:Subsanacion', $this->isCorrection ? 'S' : 'N');
+        }
+        if ($this->previousRejection !== null) {
+            $recordElement->add('sum1:RechazoPrevio', $this->previousRejection);
+        }
+
         $recordElement->add('sum1:TipoFactura', $this->invoiceType->value);
 
         if ($this->correctiveType !== null) {
