@@ -31,11 +31,7 @@ final class AeatClientTest extends TestCase {
 
         $taxpayer = new FiscalIdentifier('Test Taxpayer S.A.', 'B00000000');
 
-        // Create a temporary certificate file for testing
-        $tempCert = tempnam(sys_get_temp_dir(), 'cert');
-        file_put_contents($tempCert, 'dummy');
-
-        return new AeatClient($system, $taxpayer, $tempCert);
+        return new AeatClient($system, $taxpayer);
     }
 
     private function getXmlFromSendMethod(AeatClient $client, array $records): string {
@@ -68,7 +64,7 @@ final class AeatClientTest extends TestCase {
         $record->breakdown[0] = new BreakdownDetails();
         $record->breakdown[0]->taxType = TaxType::IVA;
         $record->breakdown[0]->regimeType = RegimeType::C01;
-        $record->breakdown[0]->operationType = OperationType::S1;
+        $record->breakdown[0]->operationType = OperationType::Subject;
         $record->breakdown[0]->taxRate = '21.00';
         $record->breakdown[0]->baseAmount = '10.00';
         $record->breakdown[0]->taxAmount = '2.10';
@@ -138,7 +134,7 @@ final class AeatClientTest extends TestCase {
         $record->breakdown[0] = new BreakdownDetails();
         $record->breakdown[0]->taxType = TaxType::IVA;
         $record->breakdown[0]->regimeType = RegimeType::C01;
-        $record->breakdown[0]->operationType = OperationType::S1;
+        $record->breakdown[0]->operationType = OperationType::Subject;
         $record->breakdown[0]->taxRate = '21.00';
         $record->breakdown[0]->baseAmount = '10.00';
         $record->breakdown[0]->taxAmount = '2.10';

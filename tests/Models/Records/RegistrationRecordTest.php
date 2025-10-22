@@ -410,7 +410,7 @@ final class RegistrationRecordTest extends TestCase {
         $record->breakdown[0] = new BreakdownDetails();
         $record->breakdown[0]->taxType = TaxType::IVA;
         $record->breakdown[0]->regimeType = RegimeType::C01;
-        $record->breakdown[0]->operationType = OperationType::S1;
+        $record->breakdown[0]->operationType = OperationType::Subject;
         $record->breakdown[0]->taxRate = '21.00';
         $record->breakdown[0]->baseAmount = '10.00';
         $record->breakdown[0]->taxAmount = '2.10';
@@ -491,7 +491,7 @@ final class RegistrationRecordTest extends TestCase {
         $record1->breakdown[0] = new BreakdownDetails();
         $record1->breakdown[0]->taxType = TaxType::IVA;
         $record1->breakdown[0]->regimeType = RegimeType::C01;
-        $record1->breakdown[0]->operationType = OperationType::S1;
+        $record1->breakdown[0]->operationType = OperationType::Subject;
         $record1->breakdown[0]->taxRate = '21.00';
         $record1->breakdown[0]->baseAmount = '10.00';
         $record1->breakdown[0]->taxAmount = '2.10';
