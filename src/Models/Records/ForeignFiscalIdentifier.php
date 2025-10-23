@@ -51,8 +51,31 @@ class ForeignFiscalIdentifier extends Model {
 
     #[Assert\Callback]
     final public function validateCountry(ExecutionContextInterface $context): void {
-        if (isset($this->country) && $this->country === 'ES') {
-            $context->buildViolation('Country code cannot be "ES", use the `FiscalIdentifier` model instead')
+        // CodigoPais es obligatorio para todos valores de IDType != 02
+        if (!isset($this->country)
+            && $this->type !== ForeignIdType::VAT
+        ) {
+            $context->buildViolation('Country code is mandatory when using an IDType different from "VAT"')
+                ->atPath('country')
+                ->addViolation();
+        }
+
+        // CodigoPais solo puede ser ES para valores de IDType != (03, 07)
+        if (isset($this->country)
+            && !($this->type === ForeignIdType::Passport || $this->type === ForeignIdType::Unregistered)
+            && $this->country === 'ES'
+        ) {
+            $context->buildViolation('Country code cannot be "ES" when using and IDType different from "Passport" or "Unregistered"')
+                ->atPath('country')
+                ->addViolation();
+        }
+
+        // CodigoPais debe ser ES para IDType == 07
+        if (isset($this->country)
+            && $this->type === ForeignIdType::Unregistered
+            && $this->country !== 'ES'
+        ) {
+            $context->buildViolation('Country code must be "ES" when using and IDType "Unregistered"')
                 ->atPath('country')
                 ->addViolation();
         }
