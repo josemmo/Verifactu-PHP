@@ -8,8 +8,6 @@ use Symfony\Component\Validator\Context\ExecutionContextInterface;
 /**
  * Identificador fiscal de fuera de España
  *
- * @field Caberecera/ObligadoEmision
- * @field Caberecera/Representante
  * @field RegistroAlta/Tercero
  * @field IDDestinatario
  */
@@ -50,9 +48,46 @@ class ForeignFiscalIdentifier extends Model {
     public string $value;
 
     #[Assert\Callback]
+    final public function validateVatNumber(ExecutionContextInterface $context): void {
+        if (!isset($this->country) || !isset($this->type) || !isset($this->value)) {
+            return;
+        }
+        if ($this->type !== ForeignIdType::VAT) {
+            return;
+        }
+        $vatCountry = mb_substr($this->value, 0, 2);
+        if ($vatCountry !== $this->country) {
+            $context->buildViolation('VAT number must start with "' . $this->country . '", found "' . $vatCountry . '"')
+                ->atPath('value')
+                ->addViolation();
+        }
+    }
+
+    #[Assert\Callback]
+    final public function validateType(ExecutionContextInterface $context): void {
+        if (!isset($this->country) || !isset($this->type)) {
+            return;
+        }
+        if ($this->country !== 'ES') {
+            return;
+        }
+        if ($this->type !== ForeignIdType::Passport && $this->type !== ForeignIdType::Unregistered) {
+            $context->buildViolation('Type must be passport or unregistered if country code is "ES"')
+                ->atPath('type')
+                ->addViolation();
+        }
+    }
+
+    #[Assert\Callback]
     final public function validateCountry(ExecutionContextInterface $context): void {
-        if (isset($this->country) && $this->country === 'ES') {
-            $context->buildViolation('Country code cannot be "ES", use the `FiscalIdentifier` model instead')
+        if (!isset($this->country) || !isset($this->type)) {
+            return;
+        }
+        if ($this->type !== ForeignIdType::Unregistered) {
+            return;
+        }
+        if ($this->country !== 'ES') {
+            $context->buildViolation('Country code must be "ES" if type is unregistered')
                 ->atPath('country')
                 ->addViolation();
         }
