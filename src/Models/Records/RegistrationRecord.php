@@ -148,18 +148,15 @@ class RegistrationRecord extends Record {
             return;
         }
 
-        $expectedTotalTaxAmount = 0;
         $expectedTotalBaseAmount = 0;
-
+        $expectedTotalTaxAmount = 0;
         foreach ($this->breakdown as $details) {
-            if (!isset($details->taxAmount) || !isset($details->baseAmount)) {
+            if (!isset($details->baseAmount) || !isset($details->taxAmount)) {
                 return;
             }
-            $expectedTotalTaxAmount += $details->taxAmount;
             $expectedTotalBaseAmount += $details->baseAmount;
-            if (isset($details->surchargeAmount)) {
-                $expectedTotalTaxAmount += $details->surchargeAmount;
-            }
+            $expectedTotalTaxAmount += $details->taxAmount;
+            $expectedTotalTaxAmount += $details->surchargeAmount ?? 0;
         }
 
         $expectedTotalTaxAmount = number_format($expectedTotalTaxAmount, 2, '.', '');
@@ -169,17 +166,17 @@ class RegistrationRecord extends Record {
                 ->addViolation();
         }
 
-        $validTotalAmount = false;
-        $expectedTotalAmount = number_format($expectedTotalBaseAmount + $expectedTotalTaxAmount, 2, '.', '');
+        $isValidTotalAmount = false;
+        $bestTotalAmount = number_format($expectedTotalBaseAmount + $expectedTotalTaxAmount, 2, '.', '');
         foreach ([0, -0.01, 0.01, -0.02, 0.02] as $tolerance) {
-            $expectedTotalAmountWithTolerance = number_format($expectedTotalAmount + $tolerance, 2, '.', '');
-            if ($this->totalAmount === $expectedTotalAmountWithTolerance) {
-                $validTotalAmount = true;
+            $expectedTotalAmount = number_format($bestTotalAmount + $tolerance, 2, '.', '');
+            if ($this->totalAmount === $expectedTotalAmount) {
+                $isValidTotalAmount = true;
                 break;
             }
         }
-        if (!$validTotalAmount) {
-            $context->buildViolation("Expected total amount of $expectedTotalAmount, got {$this->totalAmount}")
+        if (!$isValidTotalAmount) {
+            $context->buildViolation("Expected total amount of $bestTotalAmount, got {$this->totalAmount}")
                 ->atPath('totalAmount')
                 ->addViolation();
         }

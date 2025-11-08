@@ -27,7 +27,7 @@ final class BreakdownDetailsTest extends TestCase {
             $details->validate();
             $this->fail('Did not throw exception for invalid tax amount');
         } catch (InvalidModelException $e) {
-            $this->assertStringContainsString('Expected tax amount of 1.12, got 99.99', $e->getMessage());
+            $this->assertStringContainsString('Expected amount of 1.12, got 99.99', $e->getMessage());
         }
 
         // Acceptable tax amount differences
@@ -58,8 +58,8 @@ final class BreakdownDetailsTest extends TestCase {
             $details->validate();
             $this->fail('Did not throw exception for invalid tax amount');
         } catch (InvalidModelException $e) {
-            $this->assertStringContainsString('Expected tax amount of 6.98, got 99.99', $e->getMessage());
-            $this->assertStringContainsString('Expected surcharge amount of 1.73, got 12.34', $e->getMessage());
+            $this->assertStringContainsString('Expected amount of 6.98, got 99.99', $e->getMessage());
+            $this->assertStringContainsString('Expected amount of 1.73, got 12.34', $e->getMessage());
         }
 
         // Acceptable tax amount differences

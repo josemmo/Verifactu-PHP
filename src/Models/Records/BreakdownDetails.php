@@ -82,30 +82,31 @@ class BreakdownDetails extends Model {
         if (!isset($this->regimeType)) {
             return;
         }
+        if (!$this->operationType->isSubject()) {
+            return;
+        }
 
-        if ($this->operationType->isSubject()) {
-            if ($this->regimeType === RegimeType::C18) {
-                if ($this->surchargeRate === null) {
-                    $context->buildViolation('Surcharge rate must be defined for C18 regime type')
-                        ->atPath('surchargeRate')
-                        ->addViolation();
-                }
-                if ($this->surchargeAmount === null) {
-                    $context->buildViolation('Surcharge amount must be defined for C18 regime type')
-                        ->atPath('surchargeAmount')
-                        ->addViolation();
-                }
-            } else {
-                if ($this->surchargeRate !== null) {
-                    $context->buildViolation('Surcharge rate cannot be defined for non-C18 regime types')
-                        ->atPath('surchargeRate')
-                        ->addViolation();
-                }
-                if ($this->surchargeAmount !== null) {
-                    $context->buildViolation('Surcharge amount cannot be defined for non-C18 regime types')
-                        ->atPath('surchargeAmmount')
-                        ->addViolation();
-                }
+        if ($this->regimeType === RegimeType::C18) {
+            if ($this->surchargeRate === null) {
+                $context->buildViolation('Surcharge rate must be defined for C18 regime type')
+                    ->atPath('surchargeRate')
+                    ->addViolation();
+            }
+            if ($this->surchargeAmount === null) {
+                $context->buildViolation('Surcharge amount must be defined for C18 regime type')
+                    ->atPath('surchargeAmount')
+                    ->addViolation();
+            }
+        } else {
+            if ($this->surchargeRate !== null) {
+                $context->buildViolation('Surcharge rate cannot be defined for non-C18 regime types')
+                    ->atPath('surchargeRate')
+                    ->addViolation();
+            }
+            if ($this->surchargeAmount !== null) {
+                $context->buildViolation('Surcharge amount cannot be defined for non-C18 regime types')
+                    ->atPath('surchargeAmount')
+                    ->addViolation();
             }
         }
     }
@@ -156,22 +157,7 @@ class BreakdownDetails extends Model {
         if (!isset($this->baseAmount) || $this->taxRate === null || $this->taxAmount === null) {
             return;
         }
-
-        $validTaxAmount = false;
-        $bestTaxAmount = (float) $this->baseAmount * ((float) $this->taxRate / 100);
-        foreach ([0, -0.01, 0.01, -0.02, 0.02] as $tolerance) {
-            $expectedTaxAmount = number_format($bestTaxAmount + $tolerance, 2, '.', '');
-            if ($this->taxAmount === $expectedTaxAmount) {
-                $validTaxAmount = true;
-                break;
-            }
-        }
-        if (!$validTaxAmount) {
-            $bestTaxAmount = number_format($bestTaxAmount, 2, '.', '');
-            $context->buildViolation("Expected tax amount of $bestTaxAmount, got {$this->taxAmount}")
-                ->atPath('taxAmount')
-                ->addViolation();
-        }
+        $this->validateRateAmount($context, $this->taxRate, $this->taxAmount, 'taxAmount');
     }
 
     #[Assert\Callback]
@@ -179,20 +165,36 @@ class BreakdownDetails extends Model {
         if (!isset($this->baseAmount) || $this->surchargeRate === null || $this->surchargeAmount === null) {
             return;
         }
+        $this->validateRateAmount($context, $this->surchargeRate, $this->surchargeAmount, 'surchargeAmount');
+    }
 
-        $validTaxAmount = false;
-        $bestTaxAmount = (float) $this->baseAmount * ((float) $this->surchargeRate / 100);
+    /**
+     * Validate rate amount
+     *
+     * @param ExecutionContextInterface $context      Execution context
+     * @param string                    $rate         Rate
+     * @param string                    $actualAmount Actual amount
+     * @param string                    $propertyName Property name
+     */
+    private function validateRateAmount(
+        ExecutionContextInterface $context,
+        string $rate,
+        string $actualAmount,
+        string $propertyName,
+    ): void {
+        $isValidAmount = false;
+        $bestAmount = (float) $this->baseAmount * ((float) $rate / 100);
         foreach ([0, -0.01, 0.01, -0.02, 0.02] as $tolerance) {
-            $expectedTaxAmount = number_format($bestTaxAmount + $tolerance, 2, '.', '');
-            if ($this->surchargeAmount === $expectedTaxAmount) {
-                $validTaxAmount = true;
+            $expectedAmount = number_format($bestAmount + $tolerance, 2, '.', '');
+            if ($actualAmount === $expectedAmount) {
+                $isValidAmount = true;
                 break;
             }
         }
-        if (!$validTaxAmount) {
-            $bestTaxAmount = number_format($bestTaxAmount, 2, '.', '');
-            $context->buildViolation("Expected surcharge amount of $bestTaxAmount, got {$this->surchargeAmount}")
-                ->atPath('surchargeAmount')
+        if (!$isValidAmount) {
+            $bestAmountFormatted = number_format($bestAmount, 2, '.', '');
+            $context->buildViolation("Expected amount of $bestAmountFormatted, got $actualAmount")
+                ->atPath($propertyName)
                 ->addViolation();
         }
     }
