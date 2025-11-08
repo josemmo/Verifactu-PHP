@@ -148,14 +148,15 @@ class RegistrationRecord extends Record {
             return;
         }
 
+        $expectedTotalBaseAmount = 0;
         $expectedTotalTaxAmount = 0;
-        $totalBaseAmount = 0;
         foreach ($this->breakdown as $details) {
-            if (!isset($details->taxAmount) || !isset($details->baseAmount)) {
+            if (!isset($details->baseAmount) || !isset($details->taxAmount)) {
                 return;
             }
+            $expectedTotalBaseAmount += $details->baseAmount;
             $expectedTotalTaxAmount += $details->taxAmount;
-            $totalBaseAmount += $details->baseAmount;
+            $expectedTotalTaxAmount += $details->surchargeAmount ?? 0;
         }
 
         $expectedTotalTaxAmount = number_format($expectedTotalTaxAmount, 2, '.', '');
@@ -165,17 +166,16 @@ class RegistrationRecord extends Record {
                 ->addViolation();
         }
 
-        $validTotalAmount = false;
-        $bestTotalAmount = $totalBaseAmount + $expectedTotalTaxAmount;
+        $isValidTotalAmount = false;
+        $bestTotalAmount = number_format($expectedTotalBaseAmount + $expectedTotalTaxAmount, 2, '.', '');
         foreach ([0, -0.01, 0.01, -0.02, 0.02] as $tolerance) {
             $expectedTotalAmount = number_format($bestTotalAmount + $tolerance, 2, '.', '');
             if ($this->totalAmount === $expectedTotalAmount) {
-                $validTotalAmount = true;
+                $isValidTotalAmount = true;
                 break;
             }
         }
-        if (!$validTotalAmount) {
-            $bestTotalAmount = number_format($bestTotalAmount, 2, '.', '');
+        if (!$isValidTotalAmount) {
             $context->buildViolation("Expected total amount of $bestTotalAmount, got {$this->totalAmount}")
                 ->atPath('totalAmount')
                 ->addViolation();
@@ -353,6 +353,12 @@ class RegistrationRecord extends Record {
             $detalleDesgloseElement->add('sum1:BaseImponibleOimporteNoSujeto', $breakdownDetails->baseAmount);
             if ($breakdownDetails->taxAmount !== null) {
                 $detalleDesgloseElement->add('sum1:CuotaRepercutida', $breakdownDetails->taxAmount);
+            }
+            if ($breakdownDetails->surchargeRate !== null) {
+                $detalleDesgloseElement->add('sum1:TipoRecargoEquivalencia', $breakdownDetails->surchargeRate);
+            }
+            if ($breakdownDetails->surchargeAmount !== null) {
+                $detalleDesgloseElement->add('sum1:CuotaRecargoEquivalencia', $breakdownDetails->surchargeAmount);
             }
         }
 
