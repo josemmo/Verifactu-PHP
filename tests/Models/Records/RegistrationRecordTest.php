@@ -311,6 +311,7 @@ final class RegistrationRecordTest extends TestCase {
         $record->issuerName = 'Perico de los Palotes, S.A.';
         $record->invoiceType = InvoiceType::Simplificada;
         $record->description = 'Factura simplificada de prueba';
+        $record->operationDate = new DateTimeImmutable('2025-05-15');
         $record->breakdown[0] = new BreakdownDetails();
         $record->breakdown[0]->taxType = TaxType::IVA;
         $record->breakdown[0]->regimeType = RegimeType::C01;
@@ -359,6 +360,7 @@ final class RegistrationRecordTest extends TestCase {
                 <sum1:Subsanacion>N</sum1:Subsanacion>
                 <sum1:TipoFactura>F2</sum1:TipoFactura>
                 <sum1:DescripcionOperacion>Factura simplificada de prueba</sum1:DescripcionOperacion>
+                <sum1:FechaOperacion>15-05-2025</sum1:FechaOperacion>
                 <sum1:Desglose>
                     <sum1:DetalleDesglose>
                         <sum1:Impuesto>01</sum1:Impuesto>
