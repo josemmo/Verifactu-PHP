@@ -38,15 +38,6 @@ class RegistrationRecord extends Record {
     public InvoiceType $invoiceType;
 
     /**
-     * Descripción del objeto de la factura
-     *
-     * @field DescripcionOperacion
-     */
-    #[Assert\NotBlank]
-    #[Assert\Length(max: 500)]
-    public string $description;
-
-    /**
      * Fecha en la que se realiza la operación
      *
      * NOTE: Time part will be ignored.
@@ -54,6 +45,15 @@ class RegistrationRecord extends Record {
      * @field FechaOperacion
      */
     public ?DateTimeImmutable $operationDate = null;
+
+    /**
+     * Descripción del objeto de la factura
+     *
+     * @field DescripcionOperacion
+     */
+    #[Assert\NotBlank]
+    #[Assert\Length(max: 500)]
+    public string $description;
 
     /**
      * Destinatarios de la factura
@@ -330,11 +330,11 @@ class RegistrationRecord extends Record {
             $importeRectificacionElement->add('sum1:CuotaRectificada', $this->correctedTaxAmount);
         }
 
-        $recordElement->add('sum1:DescripcionOperacion', $this->description);
-
         if ($this->operationDate !== null) {
             $recordElement->add('sum1:FechaOperacion', $this->operationDate->format('d-m-Y'));
         }
+
+        $recordElement->add('sum1:DescripcionOperacion', $this->description);
 
         if (count($this->recipients) > 0) {
             $destinatariosElement = $recordElement->add('sum1:Destinatarios');
