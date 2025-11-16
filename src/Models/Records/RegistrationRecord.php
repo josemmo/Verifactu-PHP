@@ -1,6 +1,7 @@
 <?php
 namespace josemmo\Verifactu\Models\Records;
 
+use DateTimeImmutable;
 use Symfony\Component\Validator\Constraints as Assert;
 use Symfony\Component\Validator\Context\ExecutionContextInterface;
 use UXML\UXML;
@@ -35,6 +36,15 @@ class RegistrationRecord extends Record {
      */
     #[Assert\NotBlank]
     public InvoiceType $invoiceType;
+
+    /**
+     * Fecha en la que se realiza la operación
+     *
+     * NOTE: Time part will be ignored.
+     *
+     * @field FechaOperacion
+     */
+    public ?DateTimeImmutable $operationDate = null;
 
     /**
      * Descripción del objeto de la factura
@@ -318,6 +328,10 @@ class RegistrationRecord extends Record {
             $importeRectificacionElement = $recordElement->add('sum1:ImporteRectificacion');
             $importeRectificacionElement->add('sum1:BaseRectificada', $this->correctedBaseAmount);
             $importeRectificacionElement->add('sum1:CuotaRectificada', $this->correctedTaxAmount);
+        }
+
+        if ($this->operationDate !== null) {
+            $recordElement->add('sum1:FechaOperacion', $this->operationDate->format('d-m-Y'));
         }
 
         $recordElement->add('sum1:DescripcionOperacion', $this->description);
