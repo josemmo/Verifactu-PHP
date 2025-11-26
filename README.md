@@ -18,7 +18,6 @@ composer require josemmo/verifactu-php
 
 ## Ejemplo de uso
 ```php
-<?php
 use josemmo\Verifactu\Models\ComputerSystem;
 use josemmo\Verifactu\Models\Records\BreakdownDetails;
 use josemmo\Verifactu\Models\Records\FiscalIdentifier;
@@ -28,6 +27,7 @@ use josemmo\Verifactu\Models\Records\OperationType;
 use josemmo\Verifactu\Models\Records\RegimeType;
 use josemmo\Verifactu\Models\Records\RegistrationRecord;
 use josemmo\Verifactu\Models\Records\TaxType;
+use josemmo\Verifactu\Models\Responses\ResponseStatus;
 use josemmo\Verifactu\Services\AeatClient;
 
 require __DIR__ . '/vendor/autoload.php';
@@ -74,10 +74,16 @@ $taxpayer = new FiscalIdentifier('Perico de los Palotes, S.A.', 'A00000000');
 $client = new AeatClient($system, $taxpayer);
 $client->setCertificate(__DIR__ . '/certificado.pfx', 'contraseña');
 $client->setProduction(false); // <-- para usar el entorno de preproducción
-$res = $client->send([$record])->wait();
+$aeatResponse = $client->send([$record])->wait();
 
 // Obtiene la respuesta
-echo $res->asXML() . "\n";
+if ($aeatResponse->status === ResponseStatus::Correct) {
+    $csv = $aeatResponse->csv;
+    echo "Registro aceptado sin errores: $csv\n";
+} else {
+    $errorDescription = $aeatResponse->items[0]->errorDescription;
+    echo "Registro rechazado o aceptado con errores: $errorDescription\n";
+}
 ```
 
 ## Exención de responsabilidad
