@@ -28,7 +28,7 @@ class InvalidModelException extends RuntimeException {
     private function getHumanRepresentation(): string {
         $res = [];
         foreach ($this->violations as $violation) {
-            $res[] = "- {$violation->__toString()}";
+            $res[] = sprintf('- %s', $violation->getMessage());
         }
         return implode("\n", $res);
     }
