@@ -156,7 +156,72 @@ class AeatClient {
      *
      * @return string Base URI
      */
-    private function getBaseUri(): string {
-        return $this->isProduction ? 'https://www1.agenciatributaria.gob.es' : 'https://prewww1.aeat.es';
+    protected function getBaseUri(): string {
+        if ($this->isProduction) {
+            return 'https://www1.agenciatributaria.gob.es';
+        }
+
+        // Development environment: Entity Seal certificates use prewww10, others use prewww1
+        return $this->isEntitySealCertificate() ? 'https://prewww10.aeat.es' : 'https://prewww1.aeat.es';
+    }
+
+    /**
+     * Detect if the current certificate is an Entity Seal (Sello de Entidad)
+     * 1. check for "CSE" (Certificado Sello Electrónico) in Common Name
+     * 2. check for "Sello" in Common Name or Organizational Unit
+     * 3. heuristic: Organization present, but NO personal name (Given Name / Surname)
+     *
+     * @return bool
+     */
+    private function isEntitySealCertificate(): bool {
+        if ($this->certificatePath === null || $this->certificatePath === '' || !file_exists($this->certificatePath)) {
+            return false;
+        }
+
+        $content = file_get_contents($this->certificatePath);
+        if ($content === false) {
+            return false;
+        }
+
+        // Try to parse as X.509 (PEM)
+        $cert = openssl_x509_parse($content);
+
+        // If failed, try reading as P12 (just in case, though usually receives PEM)
+        if ($cert === false && $this->certificatePassword !== null && $this->certificatePassword !== '') {
+            $certs = [];
+            if (openssl_pkcs12_read($content, $certs, $this->certificatePassword)) {
+                $cert = openssl_x509_parse($certs['cert']);
+            }
+        }
+
+        if ($cert === false) {
+            return false;
+        }
+
+        if (!isset($cert['subject']) || !is_array($cert['subject'])) {
+            return false;
+        }
+
+        $subject = $cert['subject'];
+
+        // 1. Check for "CSE" (Certificado Sello Electrónico) in Common Name
+        if (isset($subject['CN']) && is_string($subject['CN']) && stripos($subject['CN'], 'CSE ') !== false) {
+            return true;
+        }
+
+        // 2. Check for "Sello" in Common Name or Organizational Unit
+        if (isset($subject['OU']) && is_string($subject['OU']) && stripos($subject['OU'], 'Sello') !== false) {
+            return true;
+        }
+        if (isset($subject['CN']) && is_string($subject['CN']) && stripos($subject['CN'], 'Sello') !== false) {
+            return true;
+        }
+
+        // 3. Heuristic: Organization present, but NO personal name (Given Name / Surname)
+        // Personal certificates (including Representative) usually have GN/SN or givenName/surname
+        $hasOrganization = isset($subject['O']) || isset($subject['organizationIdentifier']);
+        $hasPersonName = isset($subject['givenName']) || isset($subject['surname']) || isset($subject['GN']) || isset($subject['SN']);
+
+        return $hasOrganization && !$hasPersonName;
     }
 }
