@@ -83,7 +83,7 @@ class RegistrationRecord extends Record {
     public array $correctedInvoices = [];
 
     /**
-     * Base imponible rectificada (para facturas rectificativas por diferencias)
+     * Base imponible rectificada (para facturas rectificativas por sustitución)
      *
      * @field ImporteRectificacion/BaseRectificada
      */
@@ -91,7 +91,7 @@ class RegistrationRecord extends Record {
     public ?string $correctedBaseAmount = null;
 
     /**
-     * Cuota repercutida o soportada rectificada (para facturas rectificativas por diferencias)
+     * Cuota repercutida o soportada rectificada (para facturas rectificativas por sustitución)
      *
      * @field ImporteRectificacion/CuotaRectificada
      */
