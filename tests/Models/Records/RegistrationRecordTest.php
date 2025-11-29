@@ -104,17 +104,21 @@ final class RegistrationRecordTest extends TestCase {
 
         // Should also pass validation
         $record->isCorrection = true;
-        $record->isPriorRejection = true;
-        $record->validate();
+        foreach ([true, null] as $priorRejectionValue) {
+            $record->isPriorRejection = $priorRejectionValue;
+            $record->validate();
+        }
 
         // Prior rejection requires correction flag
-        $record->isCorrection = false;
-        $record->isPriorRejection = true;
-        try {
-            $record->validate();
-            $this->fail('Did not throw exception for prior rejection validation');
-        } catch (InvalidModelException $e) {
-            $this->assertStringContainsString('Record cannot be a prior rejection if it is not a correction', $e->getMessage());
+        foreach ([true, null] as $priorRejectionValue) {
+            $record->isCorrection = false;
+            $record->isPriorRejection = $priorRejectionValue;
+            try {
+                $record->validate();
+                $this->fail('Did not throw exception for prior rejection validation');
+            } catch (InvalidModelException $e) {
+                $this->assertStringContainsString('Record cannot be a prior rejection if it is not a correction', $e->getMessage());
+            }
         }
     }
 
@@ -402,7 +406,6 @@ final class RegistrationRecordTest extends TestCase {
                 </sum1:IDFactura>
                 <sum1:NombreRazonEmisor>Perico de los Palotes, S.A.</sum1:NombreRazonEmisor>
                 <sum1:Subsanacion>N</sum1:Subsanacion>
-                <sum1:RechazoPrevio>N</sum1:RechazoPrevio>
                 <sum1:TipoFactura>F2</sum1:TipoFactura>
                 <sum1:FechaOperacion>15-05-2025</sum1:FechaOperacion>
                 <sum1:DescripcionOperacion>Factura simplificada de prueba</sum1:DescripcionOperacion>

@@ -27,10 +27,12 @@ class RegistrationRecord extends Record {
      * su remisión inmediatamente anterior.
      * Es decir, en el último envío que contenía ese registro de facturación de alta rechazado.
      *
+     * Toma el valor especial `null` cuando el registro de facturación rechazado no se remitió previamente a la AEAT.
+     *
      * @field RechazoPrevio
      */
     #[Assert\Type('boolean')]
-    public bool $isPriorRejection = false;
+    public ?bool $isPriorRejection = false;
 
     /**
      * Nombre-razón social del obligado a expedir la factura
@@ -166,7 +168,7 @@ class RegistrationRecord extends Record {
 
     #[Assert\Callback]
     final public function validatePriorRejection(ExecutionContextInterface $context): void {
-        if ($this->isPriorRejection && !$this->isCorrection) {
+        if ($this->isPriorRejection !== false && !$this->isCorrection) {
             $context->buildViolation('Record cannot be a prior rejection if it is not a correction')
                 ->atPath('isPriorRejection')
                 ->addViolation();
@@ -322,7 +324,11 @@ class RegistrationRecord extends Record {
 
         $recordElement->add('sum1:NombreRazonEmisor', $this->issuerName);
         $recordElement->add('sum1:Subsanacion', $this->isCorrection ? 'S' : 'N');
-        $recordElement->add('sum1:RechazoPrevio', $this->isPriorRejection ? 'S' : 'N');
+        if ($this->isPriorRejection === true) {
+            $recordElement->add('sum1:RechazoPrevio', 'S');
+        } elseif ($this->isPriorRejection === null) {
+            $recordElement->add('sum1:RechazoPrevio', 'X');
+        }
         $recordElement->add('sum1:TipoFactura', $this->invoiceType->value);
 
         if ($this->correctiveType !== null) {
