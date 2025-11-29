@@ -12,6 +12,7 @@
         }
     ],
     "scripts": {
+        "docs": "php vendor/bin/phpdoc",
         "lint": "pint",
         "stan": "composer validate --strict && phpstan analyse",
         "test": "phpunit --testdox --colors=always tests"
@@ -34,10 +35,14 @@
     },
     "config": {
         "process-timeout": 0,
-        "sort-packages": true
+        "sort-packages": true,
+        "allow-plugins": {
+            "phpdocumentor/shim": true
+        }
     },
     "require-dev": {
         "laravel/pint": "^1.25",
+        "phpdocumentor/shim": "^3.9",
         "phpstan/phpstan": "^2.1",
         "phpstan/phpstan-strict-rules": "^2.0",
         "phpunit/phpunit": "^11.5|^12.3"
