@@ -1,4 +1,4 @@
-name: CI
+name: CI with symfony/validator 6.4 dependency
 
 on: [push, pull_request]
 
@@ -29,6 +29,10 @@ jobs:
       # Setup Composer
       - name: Setup Composer
         run: composer install
+
+      # Force symfony/validator 6.4 for the run
+      - name: Force symfony/validator 6.4
+        run: composer require symfony/validator:"^6.4"
 
       # Show which symfony/validator version has been installed
       - name: Show installed symfony/validator
