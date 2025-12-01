@@ -31,7 +31,7 @@
         "php": ">=8.2",
         "guzzlehttp/guzzle": "^7.10",
         "josemmo/uxml": "^0.1.4",
-        "symfony/validator": "^6.4|^7.3"
+        "symfony/validator": "^6.4|^7.4|^8.0"
     },
     "config": {
         "process-timeout": 0,
@@ -41,10 +41,10 @@
         }
     },
     "require-dev": {
-        "laravel/pint": "^1.25",
+        "laravel/pint": "^1.26",
         "phpdocumentor/shim": "^3.9",
         "phpstan/phpstan": "^2.1",
         "phpstan/phpstan-strict-rules": "^2.0",
-        "phpunit/phpunit": "^11.5|^12.3"
+        "phpunit/phpunit": "^11.5|^12.4"
     }
 }
