@@ -11,8 +11,10 @@ jobs:
       fail-fast: false
       matrix:
         php-version: ['8.2', '8.3', '8.4', '8.5']
+        legacy: [true, false]
         include:
           - php-version: '8.6'
+            legacy: false
             experimental: true
     steps:
       # Download code from repository
@@ -30,9 +32,11 @@ jobs:
       - name: Setup Composer
         run: composer install
 
-      # Show which symfony/validator version has been installed
-      - name: Show installed symfony/validator
-        run: composer show symfony/validator
+      # Install legacy dependencies
+      # We do this step to ensure compatibility with LTS versions of Symfony dependencies
+      - name: Install legacy dependencies
+        if: ${{ success() && matrix.legacy }}
+        run: composer require 'symfony/validator:6.4.*'
 
       # Run linter
       - name: Run linter
