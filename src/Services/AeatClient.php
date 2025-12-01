@@ -29,6 +29,7 @@ class AeatClient {
     private ?string $certificatePassword = null;
     private ?FiscalIdentifier $representative = null;
     private bool $isProduction = true;
+    private bool $isEntitySeal = false;
 
     /**
      * Class constructor
@@ -89,6 +90,18 @@ class AeatClient {
      */
     public function setProduction(bool $production): static {
         $this->isProduction = $production;
+        return $this;
+    }
+
+    /**
+     * Set if the certificate is an Entity Seal (Sello de Entidad)
+     *
+     * @param bool $isEntitySeal Pass `true` if using an Entity Seal certificate
+     *
+     * @return $this This instance
+     */
+    public function setEntitySeal(bool $isEntitySeal): static {
+        $this->isEntitySeal = $isEntitySeal;
         return $this;
     }
 
@@ -156,7 +169,12 @@ class AeatClient {
      *
      * @return string Base URI
      */
-    private function getBaseUri(): string {
-        return $this->isProduction ? 'https://www1.agenciatributaria.gob.es' : 'https://prewww1.aeat.es';
+    protected function getBaseUri(): string {
+        if ($this->isProduction) {
+            return 'https://www1.agenciatributaria.gob.es';
+        }
+
+        // Development environment: Entity Seal certificates use prewww10, others use prewww1
+        return $this->isEntitySeal ? 'https://prewww10.aeat.es' : 'https://prewww1.aeat.es';
     }
 }
