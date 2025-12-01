@@ -2,6 +2,7 @@
 namespace josemmo\Verifactu\Exceptions;
 
 use RuntimeException;
+use Symfony\Component\Validator\ConstraintViolation;
 use Symfony\Component\Validator\ConstraintViolationListInterface;
 
 /**
@@ -28,7 +29,8 @@ class InvalidModelException extends RuntimeException {
     private function getHumanRepresentation(): string {
         $res = [];
         foreach ($this->violations as $violation) {
-            $res[] = sprintf('- %s', $violation->getMessage());
+            // Use the built-in string serializer if available (default), fallback to message
+            $res[] = ($violation instanceof ConstraintViolation) ? "- $violation" : "- {$violation->getMessage()}";
         }
         return implode("\n", $res);
     }
