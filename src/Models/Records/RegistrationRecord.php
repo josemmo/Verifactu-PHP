@@ -17,6 +17,7 @@ class RegistrationRecord extends Record {
      *
      * @field Subsanacion
      */
+    #[Assert\NotNull]
     #[Assert\Type('boolean')]
     public bool $isCorrection = false;
 

@@ -16,6 +16,7 @@ class CancellationRecord extends Record {
      *
      * @field SinRegistroPrevio
      */
+    #[Assert\NotNull]
     #[Assert\Type('boolean')]
     public bool $withoutPriorRecord = false;
 

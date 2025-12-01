@@ -68,6 +68,7 @@ class ComputerSystem extends Model {
      *
      * @field TipoUsoPosibleSoloVerifactu
      */
+    #[Assert\NotNull]
     #[Assert\Type('boolean')]
     public bool $onlySupportsVerifactu;
 
@@ -76,6 +77,7 @@ class ComputerSystem extends Model {
      *
      * @field TipoUsoPosibleMultiOT
      */
+    #[Assert\NotNull]
     #[Assert\Type('boolean')]
     public bool $supportsMultipleTaxpayers;
 
@@ -84,6 +86,7 @@ class ComputerSystem extends Model {
      *
      * @field IndicadorMultiplesOT
      */
+    #[Assert\NotNull]
     #[Assert\Type('boolean')]
     public bool $hasMultipleTaxpayers;
 }
