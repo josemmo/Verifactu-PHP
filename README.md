@@ -2,6 +2,7 @@
 [![CI](https://github.com/josemmo/Verifactu-PHP/workflows/CI/badge.svg)](https://github.com/josemmo/Verifactu-PHP/actions)
 [![Última versión estable](https://img.shields.io/packagist/v/josemmo/verifactu-php)](https://packagist.org/packages/josemmo/verifactu-php)
 [![Versión de PHP](https://img.shields.io/badge/php-%3E%3D8.2-8892BF)](composer.json)
+[![Documentación](https://img.shields.io/badge/online-docs-blueviolet)](https://josemmo.github.io/Verifactu-PHP/)
 
 Verifactu-PHP es una librería sencilla escrita en PHP que permite generar registros de facturación según el sistema [VERI*FACTU](https://sede.agenciatributaria.gob.es/Sede/iva/sistemas-informaticos-facturacion-verifactu.html) y posteriormente enviarlos telemáticamente a la Agencia Tributaria (AEAT).
 
@@ -18,7 +19,6 @@ composer require josemmo/verifactu-php
 
 ## Ejemplo de uso
 ```php
-<?php
 use josemmo\Verifactu\Models\ComputerSystem;
 use josemmo\Verifactu\Models\Records\BreakdownDetails;
 use josemmo\Verifactu\Models\Records\FiscalIdentifier;
@@ -28,6 +28,7 @@ use josemmo\Verifactu\Models\Records\OperationType;
 use josemmo\Verifactu\Models\Records\RegimeType;
 use josemmo\Verifactu\Models\Records\RegistrationRecord;
 use josemmo\Verifactu\Models\Records\TaxType;
+use josemmo\Verifactu\Models\Responses\ResponseStatus;
 use josemmo\Verifactu\Services\AeatClient;
 
 require __DIR__ . '/vendor/autoload.php';
@@ -44,7 +45,7 @@ $record->description = 'Factura simplificada de prueba';
 $record->breakdown[0] = new BreakdownDetails();
 $record->breakdown[0]->taxType = TaxType::IVA;
 $record->breakdown[0]->regimeType = RegimeType::C01;
-$record->breakdown[0]->operationType = OperationType::S1;
+$record->breakdown[0]->operationType = OperationType::Subject;
 $record->breakdown[0]->baseAmount = '10.00';
 $record->breakdown[0]->taxRate = '21.00';
 $record->breakdown[0]->taxAmount = '2.10';
@@ -74,10 +75,16 @@ $taxpayer = new FiscalIdentifier('Perico de los Palotes, S.A.', 'A00000000');
 $client = new AeatClient($system, $taxpayer);
 $client->setCertificate(__DIR__ . '/certificado.pfx', 'contraseña');
 $client->setProduction(false); // <-- para usar el entorno de preproducción
-$res = $client->send([$record])->wait();
+$aeatResponse = $client->send([$record])->wait();
 
 // Obtiene la respuesta
-echo $res->asXML() . "\n";
+if ($aeatResponse->status === ResponseStatus::Correct) {
+    $csv = $aeatResponse->csv;
+    echo "Registro aceptado sin errores: $csv\n";
+} else {
+    $errorDescription = $aeatResponse->items[0]->errorDescription;
+    echo "Registro rechazado o aceptado con errores: $errorDescription\n";
+}
 ```
 
 ## Exención de responsabilidad

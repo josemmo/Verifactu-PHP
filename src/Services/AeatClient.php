@@ -18,9 +18,9 @@ use UXML\UXML;
  * Class to communicate with the AEAT web service endpoint for VERI*FACTU
  */
 class AeatClient {
-    public const NS_SOAPENV = 'http://schemas.xmlsoap.org/soap/envelope/';
-    public const NS_SUM = 'https://www2.agenciatributaria.gob.es/static_files/common/internet/dep/aplicaciones/es/aeat/tike/cont/ws/SuministroLR.xsd';
-    public const NS_SUM1 = 'https://www2.agenciatributaria.gob.es/static_files/common/internet/dep/aplicaciones/es/aeat/tike/cont/ws/SuministroInformacion.xsd';
+    private const NS_SOAPENV = 'http://schemas.xmlsoap.org/soap/envelope/';
+    private const NS_SUM = 'https://www2.agenciatributaria.gob.es/static_files/common/internet/dep/aplicaciones/es/aeat/tike/cont/ws/SuministroLR.xsd';
+    private const NS_SUM1 = 'https://www2.agenciatributaria.gob.es/static_files/common/internet/dep/aplicaciones/es/aeat/tike/cont/ws/SuministroInformacion.xsd';
 
     private readonly ComputerSystem $system;
     private readonly FiscalIdentifier $taxpayer;

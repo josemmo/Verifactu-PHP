@@ -17,8 +17,23 @@ class RegistrationRecord extends Record {
      *
      * @field Subsanacion
      */
+    #[Assert\NotNull]
     #[Assert\Type('boolean')]
     public bool $isCorrection = false;
+
+    /**
+     * Indicador de rechazo previo
+     *
+     * Para ser usado en la remisión de un nuevo registro de facturación de alta subsanado tras haber sido rechazado en
+     * su remisión inmediatamente anterior.
+     * Es decir, en el último envío que contenía ese registro de facturación de alta rechazado.
+     *
+     * Toma el valor especial `null` cuando el registro de facturación rechazado no se remitió previamente a la AEAT.
+     *
+     * @field RechazoPrevio
+     */
+    #[Assert\Type('boolean')]
+    public ?bool $isPriorRejection = false;
 
     /**
      * Nombre-razón social del obligado a expedir la factura
@@ -83,7 +98,7 @@ class RegistrationRecord extends Record {
     public array $correctedInvoices = [];
 
     /**
-     * Base imponible rectificada (para facturas rectificativas por diferencias)
+     * Base imponible rectificada (para facturas rectificativas por sustitución)
      *
      * @field ImporteRectificacion/BaseRectificada
      */
@@ -91,7 +106,7 @@ class RegistrationRecord extends Record {
     public ?string $correctedBaseAmount = null;
 
     /**
-     * Cuota repercutida o soportada rectificada (para facturas rectificativas por diferencias)
+     * Cuota repercutida o soportada rectificada (para facturas rectificativas por sustitución)
      *
      * @field ImporteRectificacion/CuotaRectificada
      */
@@ -150,6 +165,15 @@ class RegistrationRecord extends Record {
         $payload .= '&Huella=' . ($this->previousHash ?? '');
         $payload .= '&FechaHoraHusoGenRegistro=' . $this->hashedAt->format('c');
         return strtoupper(hash('sha256', $payload));
+    }
+
+    #[Assert\Callback]
+    final public function validatePriorRejection(ExecutionContextInterface $context): void {
+        if ($this->isPriorRejection !== false && !$this->isCorrection) {
+            $context->buildViolation('Record cannot be a prior rejection if it is not a correction')
+                ->atPath('isPriorRejection')
+                ->addViolation();
+        }
     }
 
     #[Assert\Callback]
@@ -301,6 +325,11 @@ class RegistrationRecord extends Record {
 
         $recordElement->add('sum1:NombreRazonEmisor', $this->issuerName);
         $recordElement->add('sum1:Subsanacion', $this->isCorrection ? 'S' : 'N');
+        if ($this->isPriorRejection === true) {
+            $recordElement->add('sum1:RechazoPrevio', 'S');
+        } elseif ($this->isPriorRejection === null) {
+            $recordElement->add('sum1:RechazoPrevio', 'X');
+        }
         $recordElement->add('sum1:TipoFactura', $this->invoiceType->value);
 
         if ($this->correctiveType !== null) {

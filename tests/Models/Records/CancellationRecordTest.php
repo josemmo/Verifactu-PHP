@@ -61,6 +61,7 @@ final class CancellationRecordTest extends TestCase {
     public function testExportsXmlElement(): void {
         // Create record
         $record = new CancellationRecord();
+        $record->isPriorRejection = true;
         $record->invoiceId = new InvoiceIdentifier();
         $record->invoiceId->issuerId = 'A00000000';
         $record->invoiceId->invoiceNumber = '12345679/G34';
@@ -100,12 +101,13 @@ final class CancellationRecordTest extends TestCase {
                     <sum1:NumSerieFacturaAnulada>12345679/G34</sum1:NumSerieFacturaAnulada>
                     <sum1:FechaExpedicionFacturaAnulada>01-01-2024</sum1:FechaExpedicionFacturaAnulada>
                 </sum1:IDFactura>
+                <sum1:RechazoPrevio>S</sum1:RechazoPrevio>
                 <sum1:Encadenamiento>
                     <sum1:RegistroAnterior>
-                    <sum1:IDEmisorFactura>A00000000</sum1:IDEmisorFactura>
-                    <sum1:NumSerieFactura>12345679/G34</sum1:NumSerieFactura>
-                    <sum1:FechaExpedicionFactura>01-01-2024</sum1:FechaExpedicionFactura>
-                    <sum1:Huella>F7B94CFD8924EDFF273501B01EE5153E4CE8F259766F88CF6ACB8935802A2B97</sum1:Huella>
+                        <sum1:IDEmisorFactura>A00000000</sum1:IDEmisorFactura>
+                        <sum1:NumSerieFactura>12345679/G34</sum1:NumSerieFactura>
+                        <sum1:FechaExpedicionFactura>01-01-2024</sum1:FechaExpedicionFactura>
+                        <sum1:Huella>F7B94CFD8924EDFF273501B01EE5153E4CE8F259766F88CF6ACB8935802A2B97</sum1:Huella>
                     </sum1:RegistroAnterior>
                 </sum1:Encadenamiento>
                 <sum1:SistemaInformatico>

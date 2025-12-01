@@ -15,9 +15,9 @@ use UXML\UXML;
  * @field RespuestaBaseType
  */
 class AeatResponse extends Model {
-    public const NS_ENV = 'http://schemas.xmlsoap.org/soap/envelope/';
-    public const NS_TIKR = 'https://www2.agenciatributaria.gob.es/static_files/common/internet/dep/aplicaciones/es/aeat/tike/cont/ws/RespuestaSuministro.xsd';
-    public const NS_TIK = 'https://www2.agenciatributaria.gob.es/static_files/common/internet/dep/aplicaciones/es/aeat/tike/cont/ws/SuministroInformacion.xsd';
+    private const NS_ENV = 'http://schemas.xmlsoap.org/soap/envelope/';
+    private const NS_TIKR = 'https://www2.agenciatributaria.gob.es/static_files/common/internet/dep/aplicaciones/es/aeat/tike/cont/ws/RespuestaSuministro.xsd';
+    private const NS_TIK = 'https://www2.agenciatributaria.gob.es/static_files/common/internet/dep/aplicaciones/es/aeat/tike/cont/ws/SuministroInformacion.xsd';
 
     /**
      * Create new instance from XML response
