@@ -14,7 +14,7 @@
     "scripts": {
         "docs": "php vendor/bin/phpdoc",
         "lint": "pint",
-        "stan": "composer validate --strict && phpstan analyse",
+        "stan": "composer validate --strict && phpstan analyse --memory-limit=1G",
         "test": "phpunit --testdox --colors=always tests"
     },
     "autoload": {
