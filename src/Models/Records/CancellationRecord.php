@@ -21,6 +21,19 @@ class CancellationRecord extends Record {
     public bool $withoutPriorRecord = false;
 
     /**
+     * Indicador de rechazo previo
+     *
+     * Para remitir un nuevo registro de facturación de anulación subsanado tras haber sido rechazado en su remisión
+     * inmediatamente anterior.
+     * Es decir, en el último envío que contenía ese registro de facturación de alta rechazado.
+     *
+     * @field RechazoPrevio
+     */
+    #[Assert\NotNull]
+    #[Assert\Type('boolean')]
+    public bool $isPriorRejection = false;
+
+    /**
      * @inheritDoc
      */
     public function calculateHash(): string {
@@ -65,6 +78,9 @@ class CancellationRecord extends Record {
 
         if ($this->withoutPriorRecord) {
             $recordElement->add('sum1:SinRegistroPrevio', 'S');
+        }
+        if ($this->isPriorRejection) {
+            $recordElement->add('sum1:RechazoPrevio', 'S');
         }
     }
 }
