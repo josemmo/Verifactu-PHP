@@ -193,6 +193,13 @@
 <dd>ID de factura</dd>
 
             <dt class="phpdocumentor-table-of-contents__entry -property -public">
+    <a class="" href="classes/josemmo-Verifactu-Models-Records-CancellationRecord.html#property_isPriorRejection">$isPriorRejection</a>
+    <span>
+                        &nbsp;: bool            </span>
+</dt>
+<dd>Indicador de rechazo previo</dd>
+
+            <dt class="phpdocumentor-table-of-contents__entry -property -public">
     <a class="" href="classes/josemmo-Verifactu-Models-Records-Record.html#property_previousHash">$previousHash</a>
     <span>
                         &nbsp;: string|null            </span>
@@ -488,6 +495,83 @@
             -public
                                                                     "
 >
+    <h4 class="phpdocumentor-element__name" id="property_isPriorRejection">
+        $isPriorRejection
+        <a href="classes/josemmo-Verifactu-Models-Records-CancellationRecord.html#property_isPriorRejection" class="headerlink"><i class="fas fa-link"></i></a>
+
+        <span class="phpdocumentor-element__modifiers">
+                                            </span>
+    </h4>
+    <aside class="phpdocumentor-element-found-in">
+    <abbr class="phpdocumentor-element-found-in__file" title="src/Models/Records/CancellationRecord.php"><a href="files/src-models-records-cancellationrecord.html"><abbr title="src/Models/Records/CancellationRecord.php">CancellationRecord.php</abbr></a></abbr>
+    :
+    <span class="phpdocumentor-element-found-in__line">32</span>
+
+    </aside>
+
+        <p class="phpdocumentor-summary">Indicador de rechazo previo</p>
+
+    
+    <code class="phpdocumentor-code phpdocumentor-signature ">
+        <span class="phpdocumentor-signature__visibility">public</span>
+            <span class="phpdocumentor-signature__type">bool</span>
+    <span class="phpdocumentor-signature__name">$isPriorRejection</span>
+     = <span class="phpdocumentor-signature__default-value">false</span></code>
+
+        <section class="phpdocumentor-description"><p>Para remitir un nuevo registro de facturación de anulación subsanado tras haber sido rechazado en su remisión
+inmediatamente anterior.
+Es decir, en el último envío que contenía ese registro de facturación de alta rechazado.</p>
+</section>
+
+    
+    
+    <h5 class="phpdocumentor-tag-list__heading" id="tags">
+        Tags
+        <a href="classes/josemmo-Verifactu-Models-Records-CancellationRecord.html#property_isPriorRejection#tags" class="headerlink"><i class="fas fa-link"></i></a>
+
+    </h5>
+    <dl class="phpdocumentor-tag-list">
+                                    <dt class="phpdocumentor-tag-list__entry">
+                    <span class="phpdocumentor-tag__name">field</span>
+                </dt>
+                <dd class="phpdocumentor-tag-list__definition">
+                                                                                
+                                                 <section class="phpdocumentor-description"><p>RechazoPrevio</p>
+</section>
+
+                                    </dd>
+                                            </dl>
+
+        
+            <section class="phpdocumentor-attributes">
+            <h5 class="phpdocumentor-elements__header" id="attributes">
+                Attributes <a href="classes/josemmo-Verifactu-Models-Records-CancellationRecord.html#property_isPriorRejection#attributes" class="headerlink"><i class="fas fa-link"></i></a>
+
+            </h5>
+                            <dl class="phpdocumentor-argument-list">
+    <dt class="phpdocumentor-argument-list__entry">
+        #[<abbr title="\Symfony\Component\Validator\Constraints\NotNull">NotNull</abbr>]
+    </dt>
+    </dl>
+                            <dl class="phpdocumentor-argument-list">
+    <dt class="phpdocumentor-argument-list__entry">
+        #[<abbr title="\Symfony\Component\Validator\Constraints\Type">Type</abbr>]
+    </dt>
+        <dd class="phpdocumentor-argument-list__entry">
+        &#039;boolean&#039;
+    </dd>
+    </dl>
+                    </section>
+        
+
+</article>
+                    <article
+        class="
+            phpdocumentor-element
+            -property
+            -public
+                                                                    "
+>
     <h4 class="phpdocumentor-element__name" id="property_previousHash">
         $previousHash
         <a href="classes/josemmo-Verifactu-Models-Records-Record.html#property_previousHash" class="headerlink"><i class="fas fa-link"></i></a>
@@ -672,6 +756,11 @@
             </h5>
                             <dl class="phpdocumentor-argument-list">
     <dt class="phpdocumentor-argument-list__entry">
+        #[<abbr title="\Symfony\Component\Validator\Constraints\NotNull">NotNull</abbr>]
+    </dt>
+    </dl>
+                            <dl class="phpdocumentor-argument-list">
+    <dt class="phpdocumentor-argument-list__entry">
         #[<abbr title="\Symfony\Component\Validator\Constraints\Type">Type</abbr>]
     </dt>
         <dd class="phpdocumentor-argument-list__entry">
@@ -704,7 +793,7 @@
     <aside class="phpdocumentor-element-found-in">
     <abbr class="phpdocumentor-element-found-in__file" title="src/Models/Records/CancellationRecord.php"><a href="files/src-models-records-cancellationrecord.html"><abbr title="src/Models/Records/CancellationRecord.php">CancellationRecord.php</abbr></a></abbr>
     :
-    <span class="phpdocumentor-element-found-in__line">25</span>
+    <span class="phpdocumentor-element-found-in__line">39</span>
 
     </aside>
 
@@ -869,7 +958,7 @@
     <aside class="phpdocumentor-element-found-in">
     <abbr class="phpdocumentor-element-found-in__file" title="src/Models/Records/CancellationRecord.php"><a href="files/src-models-records-cancellationrecord.html"><abbr title="src/Models/Records/CancellationRecord.php">CancellationRecord.php</abbr></a></abbr>
     :
-    <span class="phpdocumentor-element-found-in__line">35</span>
+    <span class="phpdocumentor-element-found-in__line">49</span>
 
     </aside>
 
@@ -1138,6 +1227,7 @@
                                                     <li class=""><a href="classes/josemmo-Verifactu-Models-Records-Record.html#property_hash">$hash</a></li>
                                                     <li class=""><a href="classes/josemmo-Verifactu-Models-Records-Record.html#property_hashedAt">$hashedAt</a></li>
                                                     <li class=""><a href="classes/josemmo-Verifactu-Models-Records-Record.html#property_invoiceId">$invoiceId</a></li>
+                                                    <li class=""><a href="classes/josemmo-Verifactu-Models-Records-CancellationRecord.html#property_isPriorRejection">$isPriorRejection</a></li>
                                                     <li class=""><a href="classes/josemmo-Verifactu-Models-Records-Record.html#property_previousHash">$previousHash</a></li>
                                                     <li class=""><a href="classes/josemmo-Verifactu-Models-Records-Record.html#property_previousInvoiceId">$previousInvoiceId</a></li>
                                                     <li class=""><a href="classes/josemmo-Verifactu-Models-Records-CancellationRecord.html#property_withoutPriorRecord">$withoutPriorRecord</a></li>

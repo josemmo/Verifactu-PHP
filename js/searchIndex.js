@@ -166,6 +166,11 @@ Search.appendIndex(
             "summary": "Indicador\u0020que\u0020especifica\u0020que\u0020se\u0020trata\u0020de\u0020la\u0020anulaci\u00F3n\u0020de\u0020un\u0020registro\u0020que\u0020no\u0020existe\u0020en\u0020la\u0020AEAT\u0020o\u0020en\u0020el\u0020SIF.",
             "url": "classes/josemmo-Verifactu-Models-Records-CancellationRecord.html#property_withoutPriorRecord"
         },                {
+            "fqsen": "\\josemmo\\Verifactu\\Models\\Records\\CancellationRecord\u003A\u003A\u0024isPriorRejection",
+            "name": "isPriorRejection",
+            "summary": "Indicador\u0020de\u0020rechazo\u0020previo",
+            "url": "classes/josemmo-Verifactu-Models-Records-CancellationRecord.html#property_isPriorRejection"
+        },                {
             "fqsen": "\\josemmo\\Verifactu\\Models\\Records\\CorrectiveType",
             "name": "CorrectiveType",
             "summary": "Tipo\u0020de\u0020factura\u0020rectificativa",
