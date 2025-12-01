@@ -2,6 +2,7 @@
 [![CI](https://github.com/josemmo/Verifactu-PHP/workflows/CI/badge.svg)](https://github.com/josemmo/Verifactu-PHP/actions)
 [![Última versión estable](https://img.shields.io/packagist/v/josemmo/verifactu-php)](https://packagist.org/packages/josemmo/verifactu-php)
 [![Versión de PHP](https://img.shields.io/badge/php-%3E%3D8.2-8892BF)](composer.json)
+[![Documentación](https://img.shields.io/badge/online-docs-blueviolet)](https://josemmo.github.io/Verifactu-PHP/)
 
 Verifactu-PHP es una librería sencilla escrita en PHP que permite generar registros de facturación según el sistema [VERI*FACTU](https://sede.agenciatributaria.gob.es/Sede/iva/sistemas-informaticos-facturacion-verifactu.html) y posteriormente enviarlos telemáticamente a la Agencia Tributaria (AEAT).
 
