@@ -14,7 +14,7 @@
     "scripts": {
         "docs": "php vendor/bin/phpdoc",
         "lint": "pint",
-        "stan": "composer validate --strict && phpstan analyse",
+        "stan": "composer validate --strict && phpstan analyse --memory-limit=1G",
         "test": "phpunit --testdox --colors=always tests"
     },
     "autoload": {
@@ -31,7 +31,7 @@
         "php": ">=8.2",
         "guzzlehttp/guzzle": "^7.10",
         "josemmo/uxml": "^0.1.4",
-        "symfony/validator": "^7.3"
+        "symfony/validator": "^6.4|^7.3"
     },
     "config": {
         "process-timeout": 0,
