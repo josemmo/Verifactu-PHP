@@ -319,9 +319,7 @@ class RegistrationRecord extends Record {
      */
     protected function exportCustomProperties(UXML $recordElement): void {
         $idFacturaElement = $recordElement->add('sum1:IDFactura');
-        $idFacturaElement->add('sum1:IDEmisorFactura', $this->invoiceId->issuerId);
-        $idFacturaElement->add('sum1:NumSerieFactura', $this->invoiceId->invoiceNumber);
-        $idFacturaElement->add('sum1:FechaExpedicionFactura', $this->invoiceId->issueDate->format('d-m-Y'));
+        $this->invoiceId->export($idFacturaElement, false);
 
         $recordElement->add('sum1:NombreRazonEmisor', $this->issuerName);
         $recordElement->add('sum1:Subsanacion', $this->isCorrection ? 'S' : 'N');
@@ -339,18 +337,14 @@ class RegistrationRecord extends Record {
             $facturasRectificadasElement = $recordElement->add('sum1:FacturasRectificadas');
             foreach ($this->correctedInvoices as $correctedInvoice) {
                 $facturaRectificadaElement = $facturasRectificadasElement->add('sum1:IDFacturaRectificada');
-                $facturaRectificadaElement->add('sum1:IDEmisorFactura', $correctedInvoice->issuerId);
-                $facturaRectificadaElement->add('sum1:NumSerieFactura', $correctedInvoice->invoiceNumber);
-                $facturaRectificadaElement->add('sum1:FechaExpedicionFactura', $correctedInvoice->issueDate->format('d-m-Y'));
+                $correctedInvoice->export($facturaRectificadaElement, false);
             }
         }
         if (count($this->replacedInvoices) > 0) {
             $facturasSustituidasElement = $recordElement->add('sum1:FacturasSustituidas');
             foreach ($this->replacedInvoices as $replacedInvoice) {
                 $facturaSustituidaElement = $facturasSustituidasElement->add('sum1:IDFacturaSustituida');
-                $facturaSustituidaElement->add('sum1:IDEmisorFactura', $replacedInvoice->issuerId);
-                $facturaSustituidaElement->add('sum1:NumSerieFactura', $replacedInvoice->invoiceNumber);
-                $facturaSustituidaElement->add('sum1:FechaExpedicionFactura', $replacedInvoice->issueDate->format('d-m-Y'));
+                $replacedInvoice->export($facturaSustituidaElement, false);
             }
         }
         if ($this->correctedBaseAmount !== null && $this->correctedTaxAmount !== null) {

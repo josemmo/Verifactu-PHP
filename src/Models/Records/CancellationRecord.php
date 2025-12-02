@@ -72,9 +72,7 @@ class CancellationRecord extends Record {
      */
     protected function exportCustomProperties(UXML $recordElement): void {
         $idFacturaElement = $recordElement->add('sum1:IDFactura');
-        $idFacturaElement->add('sum1:IDEmisorFacturaAnulada', $this->invoiceId->issuerId);
-        $idFacturaElement->add('sum1:NumSerieFacturaAnulada', $this->invoiceId->invoiceNumber);
-        $idFacturaElement->add('sum1:FechaExpedicionFacturaAnulada', $this->invoiceId->issueDate->format('d-m-Y'));
+        $this->invoiceId->export($idFacturaElement, true);
 
         if ($this->withoutPriorRecord) {
             $recordElement->add('sum1:SinRegistroPrevio', 'S');

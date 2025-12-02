@@ -2,8 +2,10 @@
 namespace josemmo\Verifactu\Models\Records;
 
 use DateTimeImmutable;
+use josemmo\Verifactu\Exceptions\ImportException;
 use josemmo\Verifactu\Models\Model;
 use Symfony\Component\Validator\Constraints as Assert;
+use UXML\UXML;
 
 /**
  * Identificador de factura
@@ -59,6 +61,62 @@ class InvoiceIdentifier extends Model {
      */
     #[Assert\NotBlank]
     public DateTimeImmutable $issueDate;
+
+    /**
+     * Import instance from XML element
+     *
+     * @param UXML $xml XML element
+     *
+     * @return self New invoice identifier instance
+     *
+     * @throws ImportException if failed to parse XML
+     */
+    public static function fromXml(UXML $xml): self {
+        $model = new self();
+
+        // Issuer ID
+        $issuerIdElement = $xml->get('sum1:IDEmisorFactura') ?? $xml->get('sum1:IdEmisorFacturaAnulada');
+        if ($issuerIdElement === null) {
+            throw new ImportException('Missing <sum1:IDEmisorFactura /> element');
+        }
+        $model->issuerId = $issuerIdElement->asText();
+
+        // Invoice number
+        $invoiceNumberElement = $xml->get('sum1:NumSerieFactura') ?? $xml->get('sum1:NumSerieFacturaAnulada');
+        if ($invoiceNumberElement === null) {
+            throw new ImportException('Missing <sum1:NumSerieFactura /> element');
+        }
+        $model->invoiceNumber = $invoiceNumberElement->asText();
+
+        // Issue date
+        $issueDateElement = $xml->get('sum1:FechaExpedicionFactura') ?? $xml->get('sum1:FechaExpedicionFacturaAnulada');
+        if ($issueDateElement === null) {
+            throw new ImportException('Missing <sum1:FechaExpedicionFactura /> element');
+        }
+        $issueDate = DateTimeImmutable::createFromFormat('d-m-Y', $issueDateElement->asText());
+        if ($issueDate === false) {
+            throw new ImportException('Invalid issue date');
+        }
+        $model->issueDate = $issueDate->setTime(0, 0, 0, 0);
+
+        return $model;
+    }
+
+    /**
+     * Export model to XML
+     *
+     * NOTE: Writes properties directly to the provided XML element, without creating a child node to wrap them.
+     * This is done as invoice identifiers appear in several different XML nodes.
+     *
+     * @param UXML    $xml            XML element
+     * @param boolean $isCancellation Whether to add cancellation suffix to properties
+     */
+    public function export(UXML $xml, bool $isCancellation): void {
+        $suffix = $isCancellation ? 'Anulada' : '';
+        $xml->add("sum1:IDEmisorFactura$suffix", $this->issuerId);
+        $xml->add("sum1:NumSerieFactura$suffix", $this->invoiceNumber);
+        $xml->add("sum1:FechaExpedicionFactura$suffix", $this->issueDate->format('d-m-Y'));
+    }
 
     /**
      * Compare instance against another invoice identifier

@@ -105,9 +105,7 @@ abstract class Record extends Model {
             $encadenamientoElement->add('sum1:PrimerRegistro', 'S');
         } else {
             $registroAnteriorElement = $encadenamientoElement->add('sum1:RegistroAnterior');
-            $registroAnteriorElement->add('sum1:IDEmisorFactura', $this->previousInvoiceId->issuerId);
-            $registroAnteriorElement->add('sum1:NumSerieFactura', $this->previousInvoiceId->invoiceNumber);
-            $registroAnteriorElement->add('sum1:FechaExpedicionFactura', $this->previousInvoiceId->issueDate->format('d-m-Y'));
+            $this->previousInvoiceId->export($registroAnteriorElement, false);
             $registroAnteriorElement->add('sum1:Huella', $this->previousHash);
         }
 
