@@ -306,6 +306,16 @@ Search.appendIndex(
             "summary": "Class\u0020constructor",
             "url": "classes/josemmo-Verifactu-Models-Records-InvoiceIdentifier.html#method___construct"
         },                {
+            "fqsen": "\\josemmo\\Verifactu\\Models\\Records\\InvoiceIdentifier\u003A\u003AfromXml\u0028\u0029",
+            "name": "fromXml",
+            "summary": "Import\u0020instance\u0020from\u0020XML\u0020element",
+            "url": "classes/josemmo-Verifactu-Models-Records-InvoiceIdentifier.html#method_fromXml"
+        },                {
+            "fqsen": "\\josemmo\\Verifactu\\Models\\Records\\InvoiceIdentifier\u003A\u003Aexport\u0028\u0029",
+            "name": "export",
+            "summary": "Export\u0020model\u0020to\u0020XML",
+            "url": "classes/josemmo-Verifactu-Models-Records-InvoiceIdentifier.html#method_export"
+        },                {
             "fqsen": "\\josemmo\\Verifactu\\Models\\Records\\InvoiceIdentifier\u003A\u003Aequals\u0028\u0029",
             "name": "equals",
             "summary": "Compare\u0020instance\u0020against\u0020another\u0020invoice\u0020identifier",
