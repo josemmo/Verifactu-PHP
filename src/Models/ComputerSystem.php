@@ -160,7 +160,7 @@ class ComputerSystem extends Model {
     /**
      * Export model to XML
      *
-     * @param UXML $xml XML parent instance
+     * @param UXML $xml XML parent element
      */
     public function export(UXML $xml): void {
         $element = $xml->add('sum1:SistemaInformatico');
