@@ -6,6 +6,8 @@ use DateTimeInterface;
 use josemmo\Verifactu\Exceptions\AeatException;
 use josemmo\Verifactu\Models\Model;
 use josemmo\Verifactu\Models\Records\InvoiceIdentifier;
+use josemmo\Verifactu\Models\Records\Record;
+use josemmo\Verifactu\Services\AeatClient;
 use Symfony\Component\Validator\Constraints as Assert;
 use UXML\UXML;
 
@@ -15,9 +17,8 @@ use UXML\UXML;
  * @field RespuestaBaseType
  */
 class AeatResponse extends Model {
-    private const NS_ENV = 'http://schemas.xmlsoap.org/soap/envelope/';
-    private const NS_TIKR = 'https://www2.agenciatributaria.gob.es/static_files/common/internet/dep/aplicaciones/es/aeat/tike/cont/ws/RespuestaSuministro.xsd';
-    private const NS_TIK = 'https://www2.agenciatributaria.gob.es/static_files/common/internet/dep/aplicaciones/es/aeat/tike/cont/ws/SuministroInformacion.xsd';
+    /** Response XML namespace */
+    public const NS = 'https://www2.agenciatributaria.gob.es/static_files/common/internet/dep/aplicaciones/es/aeat/tike/cont/ws/RespuestaSuministro.xsd';
 
     /**
      * Create new instance from XML response
@@ -29,9 +30,9 @@ class AeatResponse extends Model {
      * @throws AeatException if server returned an error or failed to parse response
      */
     public static function from(UXML $xml): self {
-        $nsEnv = self::NS_ENV;
-        $nsTikr = self::NS_TIKR;
-        $nsTik = self::NS_TIK;
+        $nsEnv = AeatClient::NS_SOAPENV;
+        $nsTikr = self::NS;
+        $nsTik = Record::NS;
         $instance = new self();
 
         // Handle server errors

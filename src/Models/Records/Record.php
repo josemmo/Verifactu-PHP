@@ -12,6 +12,9 @@ use UXML\UXML;
  * Base invoice record
  */
 abstract class Record extends Model {
+    /** XML namespace */
+    public const NS = 'https://www2.agenciatributaria.gob.es/static_files/common/internet/dep/aplicaciones/es/aeat/tike/cont/ws/SuministroInformacion.xsd';
+
     /**
      * ID de factura
      *

@@ -12,6 +12,7 @@ use josemmo\Verifactu\Models\Records\ForeignIdType;
 use josemmo\Verifactu\Models\Records\InvoiceIdentifier;
 use josemmo\Verifactu\Models\Records\InvoiceType;
 use josemmo\Verifactu\Models\Records\OperationType;
+use josemmo\Verifactu\Models\Records\Record;
 use josemmo\Verifactu\Models\Records\RegimeType;
 use josemmo\Verifactu\Models\Records\RegistrationRecord;
 use josemmo\Verifactu\Models\Records\TaxType;
@@ -392,59 +393,9 @@ final class RegistrationRecordTest extends TestCase {
         $system->validate();
 
         // Export to XML
-        $xml = UXML::newInstance('container');
+        $xml = UXML::newInstance('container', null, ['xmlns:sum1' => Record::NS]);
         $record->export($xml, $system);
-        $this->assertXmlStringEqualsXmlString(<<<XML
-        <?xml version="1.0" encoding="UTF-8"?>
-        <container>
-            <sum1:RegistroAlta>
-                <sum1:IDVersion>1.0</sum1:IDVersion>
-                <sum1:IDFactura>
-                    <sum1:IDEmisorFactura>A00000000</sum1:IDEmisorFactura>
-                    <sum1:NumSerieFactura>PRUEBA-0002</sum1:NumSerieFactura>
-                    <sum1:FechaExpedicionFactura>02-06-2025</sum1:FechaExpedicionFactura>
-                </sum1:IDFactura>
-                <sum1:NombreRazonEmisor>Perico de los Palotes, S.A.</sum1:NombreRazonEmisor>
-                <sum1:Subsanacion>N</sum1:Subsanacion>
-                <sum1:TipoFactura>F2</sum1:TipoFactura>
-                <sum1:FechaOperacion>15-05-2025</sum1:FechaOperacion>
-                <sum1:DescripcionOperacion>Factura simplificada de prueba</sum1:DescripcionOperacion>
-                <sum1:Desglose>
-                    <sum1:DetalleDesglose>
-                        <sum1:Impuesto>01</sum1:Impuesto>
-                        <sum1:ClaveRegimen>01</sum1:ClaveRegimen>
-                        <sum1:CalificacionOperacion>S1</sum1:CalificacionOperacion>
-                        <sum1:TipoImpositivo>21.00</sum1:TipoImpositivo>
-                        <sum1:BaseImponibleOimporteNoSujeto>100.00</sum1:BaseImponibleOimporteNoSujeto>
-                        <sum1:CuotaRepercutida>21.00</sum1:CuotaRepercutida>
-                    </sum1:DetalleDesglose>
-                </sum1:Desglose>
-                <sum1:CuotaTotal>21.00</sum1:CuotaTotal>
-                <sum1:ImporteTotal>121.00</sum1:ImporteTotal>
-                <sum1:Encadenamiento>
-                    <sum1:RegistroAnterior>
-                        <sum1:IDEmisorFactura>A00000000</sum1:IDEmisorFactura>
-                        <sum1:NumSerieFactura>PRUEBA-001</sum1:NumSerieFactura>
-                        <sum1:FechaExpedicionFactura>01-06-2025</sum1:FechaExpedicionFactura>
-                        <sum1:Huella>AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA</sum1:Huella>
-                    </sum1:RegistroAnterior>
-                </sum1:Encadenamiento>
-                <sum1:SistemaInformatico>
-                    <sum1:NombreRazon>Perico de los Palotes, S.A.</sum1:NombreRazon>
-                    <sum1:NIF>A00000000</sum1:NIF>
-                    <sum1:NombreSistemaInformatico>Test SIF</sum1:NombreSistemaInformatico>
-                    <sum1:IdSistemaInformatico>TS</sum1:IdSistemaInformatico>
-                    <sum1:Version>0.0.1</sum1:Version>
-                    <sum1:NumeroInstalacion>01234</sum1:NumeroInstalacion>
-                    <sum1:TipoUsoPosibleSoloVerifactu>S</sum1:TipoUsoPosibleSoloVerifactu>
-                    <sum1:TipoUsoPosibleMultiOT>N</sum1:TipoUsoPosibleMultiOT>
-                    <sum1:IndicadorMultiplesOT>N</sum1:IndicadorMultiplesOT>
-                </sum1:SistemaInformatico>
-                <sum1:FechaHoraHusoGenRegistro>2025-06-02T20:30:40+02:00</sum1:FechaHoraHusoGenRegistro>
-                <sum1:TipoHuella>01</sum1:TipoHuella>
-                <sum1:Huella>4566062C5A5D7DA4E0E876C0994071CD807962629F8D3C1F33B91EDAA65B2BA1</sum1:Huella>
-            </sum1:RegistroAlta>
-        </container>
-        XML, $xml->asXML());
+        $expectedXml = UXML::fromString(file_get_contents(__DIR__ . '/registration-record-example.xml')); // @phpstan-ignore argument.type
+        $this->assertXmlStringEqualsXmlString($expectedXml, $xml->get('sum1:RegistroAlta')?->asXML() ?? '');
     }
 }

@@ -8,6 +8,7 @@ use josemmo\Verifactu\Exceptions\AeatException;
 use josemmo\Verifactu\Models\ComputerSystem;
 use josemmo\Verifactu\Models\Records\CancellationRecord;
 use josemmo\Verifactu\Models\Records\FiscalIdentifier;
+use josemmo\Verifactu\Models\Records\Record;
 use josemmo\Verifactu\Models\Records\RegistrationRecord;
 use josemmo\Verifactu\Models\Responses\AeatResponse;
 use Psr\Http\Message\ResponseInterface;
@@ -18,9 +19,10 @@ use UXML\UXML;
  * Class to communicate with the AEAT web service endpoint for VERI*FACTU
  */
 class AeatClient {
-    private const NS_SOAPENV = 'http://schemas.xmlsoap.org/soap/envelope/';
-    private const NS_SUM = 'https://www2.agenciatributaria.gob.es/static_files/common/internet/dep/aplicaciones/es/aeat/tike/cont/ws/SuministroLR.xsd';
-    private const NS_SUM1 = 'https://www2.agenciatributaria.gob.es/static_files/common/internet/dep/aplicaciones/es/aeat/tike/cont/ws/SuministroInformacion.xsd';
+    /** SOAP envelope XML namespace */
+    public const NS_SOAPENV = 'http://schemas.xmlsoap.org/soap/envelope/';
+    /** Client XML namespace */
+    public const NS_AEAT = 'https://www2.agenciatributaria.gob.es/static_files/common/internet/dep/aplicaciones/es/aeat/tike/cont/ws/SuministroLR.xsd';
 
     private readonly ComputerSystem $system;
     private readonly FiscalIdentifier $taxpayer;
@@ -119,8 +121,8 @@ class AeatClient {
         // Build initial request
         $xml = UXML::newInstance('soapenv:Envelope', null, [
             'xmlns:soapenv' => self::NS_SOAPENV,
-            'xmlns:sum' => self::NS_SUM,
-            'xmlns:sum1' => self::NS_SUM1,
+            'xmlns:sum' => self::NS_AEAT,
+            'xmlns:sum1' => Record::NS,
         ]);
         $xml->add('soapenv:Header');
         $baseElement = $xml->add('soapenv:Body')->add('sum:RegFactuSistemaFacturacion');
