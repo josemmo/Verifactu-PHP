@@ -111,16 +111,7 @@ abstract class Record extends Model {
             $registroAnteriorElement->add('sum1:Huella', $this->previousHash);
         }
 
-        $sistemaInformaticoElement = $recordElement->add('sum1:SistemaInformatico');
-        $sistemaInformaticoElement->add('sum1:NombreRazon', $system->vendorName);
-        $sistemaInformaticoElement->add('sum1:NIF', $system->vendorNif);
-        $sistemaInformaticoElement->add('sum1:NombreSistemaInformatico', $system->name);
-        $sistemaInformaticoElement->add('sum1:IdSistemaInformatico', $system->id);
-        $sistemaInformaticoElement->add('sum1:Version', $system->version);
-        $sistemaInformaticoElement->add('sum1:NumeroInstalacion', $system->installationNumber);
-        $sistemaInformaticoElement->add('sum1:TipoUsoPosibleSoloVerifactu', $system->onlySupportsVerifactu ? 'S' : 'N');
-        $sistemaInformaticoElement->add('sum1:TipoUsoPosibleMultiOT', $system->supportsMultipleTaxpayers ? 'S' : 'N');
-        $sistemaInformaticoElement->add('sum1:IndicadorMultiplesOT', $system->hasMultipleTaxpayers ? 'S' : 'N');
+        $system->export($recordElement);
 
         $recordElement->add('sum1:FechaHoraHusoGenRegistro', $this->hashedAt->format('c'));
         $recordElement->add('sum1:TipoHuella', '01'); // SHA-256
