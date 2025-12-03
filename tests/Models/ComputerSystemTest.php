@@ -10,7 +10,7 @@ use UXML\UXML;
 final class ComputerSystemTest extends TestCase {
     public function testImportsAndExportsModel(): void {
         // Import model
-        $modelXml = TestUtils::getXmlFile(__DIR__ . '/computer-system-example.xml');
+        $modelXml = TestUtils::getXmlFile(__DIR__ . '/computer-system.xml');
         $computerSystem = ComputerSystem::fromXml($modelXml);
 
         // Export model

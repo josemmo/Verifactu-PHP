@@ -8,10 +8,20 @@ use josemmo\Verifactu\Models\Records\CancellationRecord;
 use josemmo\Verifactu\Models\Records\InvoiceIdentifier;
 use josemmo\Verifactu\Models\Records\Record;
 use josemmo\Verifactu\Tests\TestUtils;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use UXML\UXML;
 
 final class CancellationRecordTest extends TestCase {
+    /**
+     * @return array<string,string[]> PHPUnit provider
+     */
+    public static function xmlPathsProvider(): array {
+        return [
+            'simple' => [__DIR__ . '/cancellation-record.xml'],
+        ];
+    }
+
     public function testRequiresPreviousInvoice(): void {
         $record = new CancellationRecord();
         $record->invoiceId = new InvoiceIdentifier();
@@ -60,46 +70,10 @@ final class CancellationRecordTest extends TestCase {
         $record->validate();
     }
 
-    public function testExportsXmlElement(): void {
-        // Create record
-        $record = new CancellationRecord();
-        $record->isPriorRejection = true;
-        $record->invoiceId = new InvoiceIdentifier();
-        $record->invoiceId->issuerId = 'A00000000';
-        $record->invoiceId->invoiceNumber = '12345679/G34';
-        $record->invoiceId->issueDate = new DateTimeImmutable('2024-01-01');
-        $record->previousInvoiceId = new InvoiceIdentifier();
-        $record->previousInvoiceId->issuerId = 'A00000000';
-        $record->previousInvoiceId->invoiceNumber = '12345679/G34';
-        $record->previousInvoiceId->issueDate = new DateTimeImmutable('2024-01-01');
-        $record->previousHash = 'F7B94CFD8924EDFF273501B01EE5153E4CE8F259766F88CF6ACB8935802A2B97';
-        $record->hashedAt = new DateTimeImmutable('2024-01-01T19:20:40+01:00');
-        $record->hash = $record->calculateHash();
-        $record->validate();
-
-        // Build computer system
-        $system = new ComputerSystem();
-        $system->vendorName = 'Perico de los Palotes, S.A.';
-        $system->vendorNif = 'A00000000';
-        $system->name = 'Test SIF';
-        $system->id = 'TS';
-        $system->version = '0.0.1';
-        $system->installationNumber = '01234';
-        $system->onlySupportsVerifactu = true;
-        $system->supportsMultipleTaxpayers = false;
-        $system->hasMultipleTaxpayers = false;
-        $system->validate();
-
-        // Export to XML
-        $xml = UXML::newInstance('container', null, ['xmlns:sum1' => Record::NS]);
-        $record->export($xml, $system);
-        $expectedXml = TestUtils::getXmlFile(__DIR__ . '/cancellation-record-example.xml');
-        $this->assertXmlStringEqualsXmlString($expectedXml, $xml->get('sum1:RegistroAnulacion')?->asXML() ?? '');
-    }
-
-    public function testImportsAndExportsXmlElement(): void {
+    #[DataProvider('xmlPathsProvider')]
+    public function testImportsAndExportsXmlElement(string $xmlPath): void {
         // Import model
-        $modelXml = TestUtils::getXmlFile(__DIR__ . '/cancellation-record-example.xml');
+        $modelXml = TestUtils::getXmlFile($xmlPath);
         $record = Record::fromXml($modelXml);
         $this->assertInstanceOf(CancellationRecord::class, $record);
         $record->validate();

@@ -17,10 +17,21 @@ use josemmo\Verifactu\Models\Records\RegimeType;
 use josemmo\Verifactu\Models\Records\RegistrationRecord;
 use josemmo\Verifactu\Models\Records\TaxType;
 use josemmo\Verifactu\Tests\TestUtils;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use UXML\UXML;
 
 final class RegistrationRecordTest extends TestCase {
+    /**
+     * @return array<string,string[]> PHPUnit provider
+     */
+    public static function xmlPathsProvider(): array {
+        return [
+            'simplificada' => [__DIR__ . '/registration-record-f2.xml'],
+            'completa' => [__DIR__ . '/registration-record-f1.xml'],
+        ];
+    }
+
     public function testCalculatesHashForFirstRecord(): void {
         $record = new RegistrationRecord();
         $record->invoiceId = new InvoiceIdentifier();
@@ -351,58 +362,10 @@ final class RegistrationRecordTest extends TestCase {
         $record->validate();
     }
 
-    public function testExportsXmlElement(): void {
-        // Create record
-        $record = new RegistrationRecord();
-        $record->invoiceId = new InvoiceIdentifier();
-        $record->invoiceId->issuerId = 'A00000000';
-        $record->invoiceId->invoiceNumber = 'PRUEBA-0002';
-        $record->invoiceId->issueDate = new DateTimeImmutable('2025-06-02');
-        $record->issuerName = 'Perico de los Palotes, S.A.';
-        $record->invoiceType = InvoiceType::Simplificada;
-        $record->operationDate = new DateTimeImmutable('2025-05-15');
-        $record->description = 'Factura simplificada de prueba';
-        $record->breakdown[0] = new BreakdownDetails();
-        $record->breakdown[0]->taxType = TaxType::IVA;
-        $record->breakdown[0]->regimeType = RegimeType::C01;
-        $record->breakdown[0]->operationType = OperationType::Subject;
-        $record->breakdown[0]->baseAmount = '100.00';
-        $record->breakdown[0]->taxRate = '21.00';
-        $record->breakdown[0]->taxAmount = '21.00';
-        $record->totalTaxAmount = '21.00';
-        $record->totalAmount = '121.00';
-        $record->previousInvoiceId = new InvoiceIdentifier();
-        $record->previousInvoiceId->issuerId = 'A00000000';
-        $record->previousInvoiceId->invoiceNumber = 'PRUEBA-001';
-        $record->previousInvoiceId->issueDate = new DateTimeImmutable('2025-06-01');
-        $record->previousHash = 'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA';
-        $record->hashedAt = new DateTimeImmutable('2025-06-02T20:30:40+02:00');
-        $record->hash = $record->calculateHash();
-        $record->validate();
-
-        // Build computer system
-        $system = new ComputerSystem();
-        $system->vendorName = 'Perico de los Palotes, S.A.';
-        $system->vendorNif = 'A00000000';
-        $system->name = 'Test SIF';
-        $system->id = 'TS';
-        $system->version = '0.0.1';
-        $system->installationNumber = '01234';
-        $system->onlySupportsVerifactu = true;
-        $system->supportsMultipleTaxpayers = false;
-        $system->hasMultipleTaxpayers = false;
-        $system->validate();
-
-        // Export to XML
-        $xml = UXML::newInstance('container', null, ['xmlns:sum1' => Record::NS]);
-        $record->export($xml, $system);
-        $expectedXml = TestUtils::getXmlFile(__DIR__ . '/registration-record-example.xml');
-        $this->assertXmlStringEqualsXmlString($expectedXml, $xml->get('sum1:RegistroAlta')?->asXML() ?? '');
-    }
-
-    public function testImportsAndExportsXmlElement(): void {
+    #[DataProvider('xmlPathsProvider')]
+    public function testImportsAndExportsXmlElement(string $xmlPath): void {
         // Import model
-        $modelXml = TestUtils::getXmlFile(__DIR__ . '/registration-record-example.xml');
+        $modelXml = TestUtils::getXmlFile($xmlPath);
         $record = Record::fromXml($modelXml);
         $this->assertInstanceOf(RegistrationRecord::class, $record);
         $record->validate();
