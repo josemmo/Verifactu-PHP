@@ -16,6 +16,7 @@ use josemmo\Verifactu\Models\Records\Record;
 use josemmo\Verifactu\Models\Records\RegimeType;
 use josemmo\Verifactu\Models\Records\RegistrationRecord;
 use josemmo\Verifactu\Models\Records\TaxType;
+use josemmo\Verifactu\Tests\TestUtils;
 use PHPUnit\Framework\TestCase;
 use UXML\UXML;
 
@@ -395,7 +396,7 @@ final class RegistrationRecordTest extends TestCase {
         // Export to XML
         $xml = UXML::newInstance('container', null, ['xmlns:sum1' => Record::NS]);
         $record->export($xml, $system);
-        $expectedXml = UXML::fromString(file_get_contents(__DIR__ . '/registration-record-example.xml')); // @phpstan-ignore argument.type
+        $expectedXml = TestUtils::getXmlFile(__DIR__ . '/registration-record-example.xml');
         $this->assertXmlStringEqualsXmlString($expectedXml, $xml->get('sum1:RegistroAlta')?->asXML() ?? '');
     }
 }

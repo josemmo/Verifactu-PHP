@@ -7,6 +7,7 @@ use josemmo\Verifactu\Models\ComputerSystem;
 use josemmo\Verifactu\Models\Records\CancellationRecord;
 use josemmo\Verifactu\Models\Records\InvoiceIdentifier;
 use josemmo\Verifactu\Models\Records\Record;
+use josemmo\Verifactu\Tests\TestUtils;
 use PHPUnit\Framework\TestCase;
 use UXML\UXML;
 
@@ -92,7 +93,7 @@ final class CancellationRecordTest extends TestCase {
         // Export to XML
         $xml = UXML::newInstance('container', null, ['xmlns:sum1' => Record::NS]);
         $record->export($xml, $system);
-        $expectedXml = UXML::fromString(file_get_contents(__DIR__ . '/cancellation-record-example.xml')); // @phpstan-ignore argument.type
+        $expectedXml = TestUtils::getXmlFile(__DIR__ . '/cancellation-record-example.xml');
         $this->assertXmlStringEqualsXmlString($expectedXml, $xml->get('sum1:RegistroAnulacion')?->asXML() ?? '');
     }
 }

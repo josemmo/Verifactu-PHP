@@ -3,13 +3,14 @@ namespace josemmo\Verifactu\Tests\Models;
 
 use josemmo\Verifactu\Models\ComputerSystem;
 use josemmo\Verifactu\Models\Records\Record;
+use josemmo\Verifactu\Tests\TestUtils;
 use PHPUnit\Framework\TestCase;
 use UXML\UXML;
 
 final class ComputerSystemTest extends TestCase {
     public function testImportsAndExportsModel(): void {
         // Import model
-        $modelXml = UXML::fromString(file_get_contents(__DIR__ . '/computer-system-example.xml')); // @phpstan-ignore argument.type
+        $modelXml = TestUtils::getXmlFile(__DIR__ . '/computer-system-example.xml');
         $computerSystem = ComputerSystem::fromXml($modelXml);
 
         // Export model
