@@ -75,7 +75,7 @@ class InvoiceIdentifier extends Model {
         $model = new self();
 
         // Issuer ID
-        $issuerIdElement = $xml->get('sum1:IDEmisorFactura') ?? $xml->get('sum1:IdEmisorFacturaAnulada');
+        $issuerIdElement = $xml->get('sum1:IDEmisorFactura') ?? $xml->get('sum1:IDEmisorFacturaAnulada');
         if ($issuerIdElement === null) {
             throw new ImportException('Missing <sum1:IDEmisorFactura /> element');
         }
