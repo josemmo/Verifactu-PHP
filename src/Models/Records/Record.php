@@ -2,6 +2,8 @@
 namespace josemmo\Verifactu\Models\Records;
 
 use DateTimeImmutable;
+use DateTimeInterface;
+use josemmo\Verifactu\Exceptions\ImportException;
 use josemmo\Verifactu\Models\ComputerSystem;
 use josemmo\Verifactu\Models\Model;
 use Symfony\Component\Validator\Constraints as Assert;
@@ -58,6 +60,74 @@ abstract class Record extends Model {
     public DateTimeImmutable $hashedAt;
 
     /**
+     * Get record element name
+     *
+     * @return string XML element name
+     */
+    abstract protected static function getRecordElementName(): string;
+
+    /**
+     * Import instance from XML element
+     *
+     * @param UXML $xml XML element
+     *
+     * @return RegistrationRecord|CancellationRecord Record instance
+     *
+     * @throws ImportException if failed to parse XML
+     */
+    final public static function fromXml(UXML $xml): self {
+        $nodeName = $xml->element()->nodeName;
+        if (!str_starts_with($nodeName, 'sum1:')) {
+            throw new ImportException('Node namespace must be "sum1"');
+        }
+        $nodeName = mb_substr($nodeName, 5); // Strip namespace
+
+        // Create record instance
+        $record = match ($nodeName) {
+            RegistrationRecord::getRecordElementName() => new RegistrationRecord(),
+            CancellationRecord::getRecordElementName() => new CancellationRecord(),
+            default => throw new ImportException('Unexpected node type'),
+        };
+
+        // Previous invoice and hash
+        $registroAnteriorElement = $xml->get('sum1:Encadenamiento/sum1:RegistroAnterior');
+        if ($registroAnteriorElement === null) {
+            $record->previousInvoiceId = null;
+            $record->previousHash = null;
+        } else {
+            $record->previousInvoiceId = InvoiceIdentifier::fromXml($registroAnteriorElement);
+            $previousHash = $registroAnteriorElement->get('sum1:Huella')?->asText();
+            if ($previousHash === null) {
+                throw new ImportException('Missing <sum1:Huella /> from <sum1: sum1:RegistroAnterior /> element');
+            }
+            $record->previousHash = $previousHash;
+        }
+
+        // Custom properties
+        $record->importCustomProperties($xml);
+
+        // Hashed at
+        $rawHashedAt = $xml->get('sum1:FechaHoraHusoGenRegistro')?->asText();
+        if ($rawHashedAt === null) {
+            throw new ImportException('Missing <sum1:FechaHoraHusoGenRegistro /> element');
+        }
+        $hashedAt = DateTimeImmutable::createFromFormat(DateTimeInterface::ISO8601, $rawHashedAt);
+        if ($hashedAt === false) {
+            throw new ImportException('Invalid value for <sum1:FechaHoraHusoGenRegistro /> element');
+        }
+        $record->hashedAt = $hashedAt;
+
+        // Hash
+        $hash = $xml->get('sum1:Huella')?->asText();
+        if ($hash === null) {
+            throw new ImportException('Missing <sum1:Huella /> element');
+        }
+        $record->hash = $hash;
+
+        return $record;
+    }
+
+    /**
      * Calculate record hash
      *
      * @return string Expected record hash
@@ -90,11 +160,11 @@ abstract class Record extends Model {
     /**
      * Export record to XML
      *
-     * @param UXML           $xml    UXML instance
+     * @param UXML           $xml    XML parent element
      * @param ComputerSystem $system Computer system information
      */
     public function export(UXML $xml, ComputerSystem $system): void {
-        $recordElementName = $this->getRecordElementName();
+        $recordElementName = $this::class::getRecordElementName();
         $recordElement = $xml->add("sum1:$recordElementName");
         $recordElement->add('sum1:IDVersion', '1.0');
 
@@ -117,11 +187,13 @@ abstract class Record extends Model {
     }
 
     /**
-     * Get record element name
+     * Import custom record properties from XML
      *
-     * @return string XML element name
+     * @param UXML $recordElement Record element
+     *
+     * @throws ImportException if failed to parse XML
      */
-    abstract protected function getRecordElementName(): string;
+    abstract protected function importCustomProperties(UXML $recordElement): void;
 
     /**
      * Export custom record properties to XML

@@ -96,4 +96,22 @@ final class CancellationRecordTest extends TestCase {
         $expectedXml = TestUtils::getXmlFile(__DIR__ . '/cancellation-record-example.xml');
         $this->assertXmlStringEqualsXmlString($expectedXml, $xml->get('sum1:RegistroAnulacion')?->asXML() ?? '');
     }
+
+    public function testImportsAndExportsXmlElement(): void {
+        // Import model
+        $modelXml = TestUtils::getXmlFile(__DIR__ . '/cancellation-record-example.xml');
+        $record = Record::fromXml($modelXml);
+        $this->assertInstanceOf(CancellationRecord::class, $record);
+        $record->validate();
+
+        // Import computer system
+        $computerSystemXml = $modelXml->get('sum1:SistemaInformatico');
+        $this->assertNotNull($computerSystemXml);
+        $computerSystem = ComputerSystem::fromXml($computerSystemXml);
+
+        // Export model
+        $exportedXml = UXML::newInstance('container', null, ['xmlns:sum1' => Record::NS]);
+        $record->export($exportedXml, $computerSystem);
+        $this->assertXmlStringEqualsXmlString($modelXml, $exportedXml->get('sum1:RegistroAnulacion')?->asXML() ?? '');
+    }
 }

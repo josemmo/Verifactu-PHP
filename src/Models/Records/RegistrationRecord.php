@@ -2,6 +2,7 @@
 namespace josemmo\Verifactu\Models\Records;
 
 use DateTimeImmutable;
+use josemmo\Verifactu\Exceptions\ImportException;
 use Symfony\Component\Validator\Constraints as Assert;
 use Symfony\Component\Validator\Context\ExecutionContextInterface;
 use UXML\UXML;
@@ -150,6 +151,13 @@ class RegistrationRecord extends Record {
     #[Assert\NotBlank]
     #[Assert\Regex(pattern: '/^-?\d{1,12}\.\d{2}$/')]
     public string $totalAmount;
+
+    /**
+     * @inheritDoc
+     */
+    protected static function getRecordElementName(): string {
+        return 'RegistroAlta';
+    }
 
     /**
      * @inheritDoc
@@ -310,26 +318,155 @@ class RegistrationRecord extends Record {
     /**
      * @inheritDoc
      */
-    protected function getRecordElementName(): string {
-        return 'RegistroAlta';
+    protected function importCustomProperties(UXML $recordElement): void {
+        // Invoice ID
+        $idFacturaElement = $recordElement->get('sum1:IDFactura');
+        if ($idFacturaElement === null) {
+            throw new ImportException('Missing <sum1:IDFactura /> element');
+        }
+        $this->invoiceId = InvoiceIdentifier::fromXml($idFacturaElement);
+
+        // Issuer name
+        $issuerName = $recordElement->get('sum1:NombreRazonEmisor')?->asText();
+        if ($issuerName === null) {
+            throw new ImportException('Missing <sum1:NombreRazonEmisor /> element');
+        }
+        $this->issuerName = $issuerName;
+
+        // Flags
+        $isCorrection = $recordElement->get('sum1:Subsanacion')?->asText() ?? 'N';
+        $isPriorRejection = $recordElement->get('sum1:RechazoPrevio')?->asText() ?? 'N';
+        $this->isCorrection = ($isCorrection === 'S');
+        $this->isPriorRejection = match ($isPriorRejection) {
+            'S' => true,
+            'N' => false,
+            'X' => null,
+            default => throw new ImportException('Invalid value for <sum1:RechazoPrevio /> element'),
+        };
+
+        // Invoice type
+        $rawInvoiceType = $recordElement->get('sum1:TipoFactura')?->asText();
+        if ($rawInvoiceType === null) {
+            throw new ImportException('Missing <sum1:TipoFactura /> element');
+        }
+        $invoiceType = InvoiceType::tryFrom($rawInvoiceType);
+        if ($invoiceType === null) {
+            throw new ImportException('Invalid value for <sum1:TipoFactura /> element');
+        }
+        $this->invoiceType = $invoiceType;
+
+        // Corrective details
+        $rawCorrectiveType = $recordElement->get('sum1:TipoRectificativa')?->asText();
+        if ($rawCorrectiveType !== null) {
+            $correctiveType = CorrectiveType::tryFrom($rawCorrectiveType);
+            if ($correctiveType === null) {
+                throw new ImportException('Invalid value for <sum1:TipoRectificativa /> element');
+            }
+            $this->correctiveType = $correctiveType;
+        }
+        foreach ($recordElement->getAll('sum1:FacturasRectificadas/sum1:IDFacturaRectificada') as $facturaRectificadaElement) {
+            $this->correctedInvoices[] = InvoiceIdentifier::fromXml($facturaRectificadaElement);
+        }
+        foreach ($recordElement->getAll('sum1:FacturasSustituidas/sum1:IDFacturaSustituida') as $facturaSustituidaElement) {
+            $this->replacedInvoices[] = InvoiceIdentifier::fromXml($facturaSustituidaElement);
+        }
+        $this->correctedBaseAmount = $recordElement->get('sum1:ImporteRectificacion/sum1:BaseRectificada')?->asText();
+        $this->correctedTaxAmount = $recordElement->get('sum1:ImporteRectificacion/sum1:CuotaRectificada')?->asText();
+
+        // Operation date
+        $rawOperationDate = $recordElement->get('sum1:FechaOperacion')?->asText();
+        if ($rawOperationDate !== null) {
+            $operationDate = DateTimeImmutable::createFromFormat('d-m-Y', $rawOperationDate);
+            if ($operationDate === false) {
+                throw new ImportException('Invalid value for <sum1:FechaOperacion /> element');
+            }
+            $this->operationDate = $operationDate;
+        }
+
+        // Description
+        $description = $recordElement->get('sum1:DescripcionOperacion')?->asText();
+        if ($description === null) {
+            throw new ImportException('Missing <sum1:DescripcionOperacion /> element');
+        }
+        $this->description = $description;
+
+        // Recipients
+        foreach ($recordElement->getAll('sum1:Destinatarios/sum1:IDDestinatario') as $destinatarioElement) {
+            $recipientName = $destinatarioElement->get('sum1:NombreRazon')?->asText();
+            if ($recipientName === null) {
+                throw new ImportException('Missing <sum1:NombreRazon /> from <sum1:IDDestinatario /> element');
+            }
+
+            // Fiscal identifier
+            $recipientNif = $destinatarioElement->get('sum1:NIF')?->asText();
+            if ($recipientNif !== null) {
+                $this->recipients[] = new FiscalIdentifier($recipientName, $recipientNif);
+                continue;
+            }
+
+            // Foreign fiscal identifier
+            $recipientCountry = $destinatarioElement->get('sum1:IDOtro/sum1:CodigoPais')?->asText();
+            if ($recipientCountry === null) {
+                throw new ImportException('Missing <sum1:CodigoPais /> from <sum1:IDDestinatario /> element');
+            }
+            $rawRecipientType = $destinatarioElement->get('sum1:IDOtro/sum1:IDType')?->asText();
+            if ($rawRecipientType === null) {
+                throw new ImportException('Missing <sum1:IDType /> from <sum1:IDDestinatario /> element');
+            }
+            $recipientType = ForeignIdType::tryFrom($rawRecipientType);
+            if ($recipientType === null) {
+                throw new ImportException('Invalid value for <sum1:IDType /> from <sum1:IDDestinatario /> element');
+            }
+            $recipientValue = $destinatarioElement->get('sum1:IDOtro/sum1:ID')?->asText();
+            if ($recipientValue === null) {
+                throw new ImportException('Missing <sum1:ID /> from <sum1:IDDestinatario /> element');
+            }
+            $this->recipients[] = new ForeignFiscalIdentifier($recipientName, $recipientCountry, $recipientType, $recipientValue);
+        }
+
+        // Breakdown
+        foreach ($recordElement->getAll('sum1:Desglose/sum1:DetalleDesglose') as $detalleDesgloseElement) {
+            $this->breakdown[] = BreakdownDetails::fromXml($detalleDesgloseElement);
+        }
+
+        // Total tax amount
+        $totalTaxAmount = $recordElement->get('sum1:CuotaTotal')?->asText();
+        if ($totalTaxAmount === null) {
+            throw new ImportException('Missing <sum1:CuotaTotal /> element');
+        }
+        $this->totalTaxAmount = $totalTaxAmount;
+
+        // Total amount
+        $totalAmount = $recordElement->get('sum1:ImporteTotal')?->asText();
+        if ($totalAmount === null) {
+            throw new ImportException('Missing <sum1:ImporteTotal /> element');
+        }
+        $this->totalAmount = $totalAmount;
     }
 
     /**
      * @inheritDoc
      */
     protected function exportCustomProperties(UXML $recordElement): void {
+        // Invoice ID
         $idFacturaElement = $recordElement->add('sum1:IDFactura');
         $this->invoiceId->export($idFacturaElement, false);
 
+        // Issuer name
         $recordElement->add('sum1:NombreRazonEmisor', $this->issuerName);
+
+        // Flags
         $recordElement->add('sum1:Subsanacion', $this->isCorrection ? 'S' : 'N');
         if ($this->isPriorRejection === true) {
             $recordElement->add('sum1:RechazoPrevio', 'S');
         } elseif ($this->isPriorRejection === null) {
             $recordElement->add('sum1:RechazoPrevio', 'X');
         }
+
+        // Invoice type
         $recordElement->add('sum1:TipoFactura', $this->invoiceType->value);
 
+        // Corrective details
         if ($this->correctiveType !== null) {
             $recordElement->add('sum1:TipoRectificativa', $this->correctiveType->value);
         }
@@ -353,12 +490,15 @@ class RegistrationRecord extends Record {
             $importeRectificacionElement->add('sum1:CuotaRectificada', $this->correctedTaxAmount);
         }
 
+        // Operation date
         if ($this->operationDate !== null) {
             $recordElement->add('sum1:FechaOperacion', $this->operationDate->format('d-m-Y'));
         }
 
+        // Description
         $recordElement->add('sum1:DescripcionOperacion', $this->description);
 
+        // Recipients
         if (count($this->recipients) > 0) {
             $destinatariosElement = $recordElement->add('sum1:Destinatarios');
             foreach ($this->recipients as $recipient) {
@@ -375,30 +515,13 @@ class RegistrationRecord extends Record {
             }
         }
 
+        // Breakdown
         $desgloseElement = $recordElement->add('sum1:Desglose');
         foreach ($this->breakdown as $breakdownDetails) {
-            $detalleDesgloseElement = $desgloseElement->add('sum1:DetalleDesglose');
-            $detalleDesgloseElement->add('sum1:Impuesto', $breakdownDetails->taxType->value);
-            $detalleDesgloseElement->add('sum1:ClaveRegimen', $breakdownDetails->regimeType->value);
-            $detalleDesgloseElement->add(
-                $breakdownDetails->operationType->isExempt() ? 'sum1:OperacionExenta' : 'sum1:CalificacionOperacion',
-                $breakdownDetails->operationType->value,
-            );
-            if ($breakdownDetails->taxRate !== null) {
-                $detalleDesgloseElement->add('sum1:TipoImpositivo', $breakdownDetails->taxRate);
-            }
-            $detalleDesgloseElement->add('sum1:BaseImponibleOimporteNoSujeto', $breakdownDetails->baseAmount);
-            if ($breakdownDetails->taxAmount !== null) {
-                $detalleDesgloseElement->add('sum1:CuotaRepercutida', $breakdownDetails->taxAmount);
-            }
-            if ($breakdownDetails->surchargeRate !== null) {
-                $detalleDesgloseElement->add('sum1:TipoRecargoEquivalencia', $breakdownDetails->surchargeRate);
-            }
-            if ($breakdownDetails->surchargeAmount !== null) {
-                $detalleDesgloseElement->add('sum1:CuotaRecargoEquivalencia', $breakdownDetails->surchargeAmount);
-            }
+            $breakdownDetails->export($desgloseElement);
         }
 
+        // Totals
         $recordElement->add('sum1:CuotaTotal', $this->totalTaxAmount);
         $recordElement->add('sum1:ImporteTotal', $this->totalAmount);
     }
