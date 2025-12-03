@@ -13,6 +13,34 @@ use Symfony\Component\Validator\Context\ExecutionContextInterface;
  */
 class ForeignFiscalIdentifier extends Model {
     /**
+     * Class constructor
+     *
+     * @param string|null        $name    Name
+     * @param string|null        $country Country
+     * @param ForeignIdType|null $type    ID type
+     * @param string|null        $value   ID value
+     */
+    public function __construct(
+        ?string $name = null,
+        ?string $country = null,
+        ?ForeignIdType $type = null,
+        ?string $value = null,
+    ) {
+        if ($name !== null) {
+            $this->name = $name;
+        }
+        if ($country !== null) {
+            $this->country = $country;
+        }
+        if ($type !== null) {
+            $this->type = $type;
+        }
+        if ($value !== null) {
+            $this->value = $value;
+        }
+    }
+
+    /**
      * Nombre-razón social
      *
      * @field NombreRazon
