@@ -101,6 +101,11 @@ Search.appendIndex(
             "summary": "Detalle\u0020de\u0020desglose",
             "url": "classes/josemmo-Verifactu-Models-Records-BreakdownDetails.html"
         },                {
+            "fqsen": "\\josemmo\\Verifactu\\Models\\Records\\BreakdownDetails\u003A\u003AfromXml\u0028\u0029",
+            "name": "fromXml",
+            "summary": "Import\u0020instance\u0020from\u0020XML\u0020element",
+            "url": "classes/josemmo-Verifactu-Models-Records-BreakdownDetails.html#method_fromXml"
+        },                {
             "fqsen": "\\josemmo\\Verifactu\\Models\\Records\\BreakdownDetails\u003A\u003AvalidateRegimeType\u0028\u0029",
             "name": "validateRegimeType",
             "summary": "",
@@ -120,6 +125,11 @@ Search.appendIndex(
             "name": "validateSurchargeAmount",
             "summary": "",
             "url": "classes/josemmo-Verifactu-Models-Records-BreakdownDetails.html#method_validateSurchargeAmount"
+        },                {
+            "fqsen": "\\josemmo\\Verifactu\\Models\\Records\\BreakdownDetails\u003A\u003Aexport\u0028\u0029",
+            "name": "export",
+            "summary": "Export\u0020model\u0020to\u0020XML",
+            "url": "classes/josemmo-Verifactu-Models-Records-BreakdownDetails.html#method_export"
         },                {
             "fqsen": "\\josemmo\\Verifactu\\Models\\Records\\BreakdownDetails\u003A\u003A\u0024taxType",
             "name": "taxType",
@@ -225,6 +235,11 @@ Search.appendIndex(
             "name": "ForeignFiscalIdentifier",
             "summary": "Identificador\u0020fiscal\u0020de\u0020fuera\u0020de\u0020Espa\u00F1a",
             "url": "classes/josemmo-Verifactu-Models-Records-ForeignFiscalIdentifier.html"
+        },                {
+            "fqsen": "\\josemmo\\Verifactu\\Models\\Records\\ForeignFiscalIdentifier\u003A\u003A__construct\u0028\u0029",
+            "name": "__construct",
+            "summary": "Class\u0020constructor",
+            "url": "classes/josemmo-Verifactu-Models-Records-ForeignFiscalIdentifier.html#method___construct"
         },                {
             "fqsen": "\\josemmo\\Verifactu\\Models\\Records\\ForeignFiscalIdentifier\u003A\u003AvalidateVatNumber\u0028\u0029",
             "name": "validateVatNumber",
@@ -455,6 +470,11 @@ Search.appendIndex(
             "name": "Record",
             "summary": "Base\u0020invoice\u0020record",
             "url": "classes/josemmo-Verifactu-Models-Records-Record.html"
+        },                {
+            "fqsen": "\\josemmo\\Verifactu\\Models\\Records\\Record\u003A\u003AfromXml\u0028\u0029",
+            "name": "fromXml",
+            "summary": "Import\u0020instance\u0020from\u0020XML\u0020element",
+            "url": "classes/josemmo-Verifactu-Models-Records-Record.html#method_fromXml"
         },                {
             "fqsen": "\\josemmo\\Verifactu\\Models\\Records\\Record\u003A\u003AcalculateHash\u0028\u0029",
             "name": "calculateHash",
