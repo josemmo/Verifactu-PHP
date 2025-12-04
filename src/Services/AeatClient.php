@@ -5,6 +5,7 @@ use GuzzleHttp\Client;
 use GuzzleHttp\Exception\GuzzleException;
 use GuzzleHttp\Promise\PromiseInterface;
 use josemmo\Verifactu\Exceptions\AeatException;
+use josemmo\Verifactu\Exceptions\AeatResponseException;
 use josemmo\Verifactu\Models\ComputerSystem;
 use josemmo\Verifactu\Models\Records\CancellationRecord;
 use josemmo\Verifactu\Models\Records\FiscalIdentifier;
@@ -13,6 +14,7 @@ use josemmo\Verifactu\Models\Records\RegistrationRecord;
 use josemmo\Verifactu\Models\Responses\AeatResponse;
 use Psr\Http\Message\ResponseInterface;
 use SensitiveParameter;
+use Throwable;
 use UXML\UXML;
 
 /**
@@ -117,7 +119,8 @@ class AeatClient {
      * @throws AeatException   if AEAT server returned an error
      * @throws GuzzleException if request sending failed
      */
-    public function send(array $records): PromiseInterface { /** @phpstan-ignore generics.notGeneric */
+    public function send(array $records): PromiseInterface {
+        /** @phpstan-ignore generics.notGeneric */
         // Build initial request
         $xml = UXML::newInstance('soapenv:Envelope', null, [
             'xmlns:soapenv' => self::NS_SOAPENV,
@@ -162,7 +165,18 @@ class AeatClient {
         // Parse and return response
         return $responsePromise
             ->then(fn (ResponseInterface $response): string => $response->getBody()->getContents())
-            ->then(fn (string $response): UXML => UXML::fromString($response))
+            ->then(function (string $response): UXML {
+                try {
+                    return UXML::fromString($response);
+                } catch (Throwable $e) {
+                    throw new AeatResponseException(
+                        $response,
+                        "AEAT did not return an XML",
+                        0,
+                        $e,
+                    );
+                }
+            })
             ->then(fn (UXML $xml): AeatResponse => AeatResponse::from($xml));
     }
 
