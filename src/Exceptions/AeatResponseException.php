@@ -1,13 +1,12 @@
 <?php
 namespace josemmo\Verifactu\Exceptions;
 
-use RuntimeException;
 use Throwable;
 
 /**
  * Exception thrown by the AEAT client
  */
-class AeatResponseException extends RuntimeException {
+class AeatResponseException extends AeatException {
     public function __construct(
         public readonly string $response,
         string $message,

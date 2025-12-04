@@ -14,7 +14,6 @@ use josemmo\Verifactu\Models\Records\RegistrationRecord;
 use josemmo\Verifactu\Models\Responses\AeatResponse;
 use Psr\Http\Message\ResponseInterface;
 use SensitiveParameter;
-use Throwable;
 use UXML\UXML;
 
 /**
@@ -164,18 +163,20 @@ class AeatClient {
 
         // Parse and return response
         return $responsePromise
-            ->then(fn (ResponseInterface $response): string => $response->getBody()->getContents())
-            ->then(function (string $response): UXML {
-                try {
-                    return UXML::fromString($response);
-                } catch (Throwable $e) {
+            ->then(fn (ResponseInterface $response): array => [
+                "content-type" => $response->getHeaderLine('content-type'),
+                "content" => $response->getBody()->getContents(),
+            ])
+            /** @param array{ content-type: string, content: string } $response */
+            ->then(function (array $response): UXML {
+                if (!str_contains($response['content-type'], 'text/xml')) {
                     throw new AeatResponseException(
-                        $response,
-                        "AEAT did not return an XML",
-                        0,
-                        $e,
+                        $response['content'],
+                        'AEAT did not return an XML'
                     );
                 }
+
+                return UXML::fromString($response['content']);
             })
             ->then(fn (UXML $xml): AeatResponse => AeatResponse::from($xml));
     }
