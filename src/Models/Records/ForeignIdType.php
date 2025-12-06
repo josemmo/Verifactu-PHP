@@ -17,6 +17,10 @@ enum ForeignIdType: string {
     /** Otro documento probatorio */
     case Other = '06';
 
-    /** No censado */
+    /**
+     * No censado (en caso de que todavía no esté dado de alta en la AEAT)
+     *
+     * NOTA: El uso de este valor obliga a subsanar el registro posteriormente para corregir el tipo de identificación.
+     */
     case Unregistered = '07';
 }

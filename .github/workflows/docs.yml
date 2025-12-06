@@ -1,0 +1,40 @@
+name: Documentation
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  docs:
+    name: Build docs
+    runs-on: ubuntu-latest
+    steps:
+      # Download code from repository
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      # Setup PHP
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: 8.5
+          coverage: none
+
+      # Setup Composer
+      - name: Setup Composer
+        run: composer install
+
+      # Build documentation
+      - name: Build documentation
+        run: composer docs
+
+       # Deploy documentation
+      - name: Deploy documentation
+        uses: JamesIves/github-pages-deploy-action@v4
+        with:
+          branch: gh-pages
+          folder: build/docs
+          clean: true

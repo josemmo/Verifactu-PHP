@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<sum1:RegistroAlta xmlns:sum1="https://www2.agenciatributaria.gob.es/static_files/common/internet/dep/aplicaciones/es/aeat/tike/cont/ws/SuministroInformacion.xsd">
+    <sum1:IDVersion>1.0</sum1:IDVersion>
+    <sum1:IDFactura>
+        <sum1:IDEmisorFactura>00000000B</sum1:IDEmisorFactura>
+        <sum1:NumSerieFactura>PRUEBA-0002</sum1:NumSerieFactura>
+        <sum1:FechaExpedicionFactura>02-06-2025</sum1:FechaExpedicionFactura>
+    </sum1:IDFactura>
+    <sum1:NombreRazonEmisor>El Nombre del Emisor, S.L.</sum1:NombreRazonEmisor>
+    <sum1:Subsanacion>N</sum1:Subsanacion>
+    <sum1:TipoFactura>F1</sum1:TipoFactura>
+    <sum1:FechaOperacion>15-05-2025</sum1:FechaOperacion>
+    <sum1:DescripcionOperacion>Factura de prueba</sum1:DescripcionOperacion>
+    <sum1:Destinatarios>
+        <sum1:IDDestinatario>
+            <sum1:NombreRazon>El Destinatario, S.L.</sum1:NombreRazon>
+            <sum1:NIF>11111111B</sum1:NIF>
+        </sum1:IDDestinatario>
+        <sum1:IDDestinatario>
+            <sum1:NombreRazon>Louise Dubois</sum1:NombreRazon>
+            <sum1:IDOtro>
+                <sum1:CodigoPais>FR</sum1:CodigoPais>
+                <sum1:IDType>02</sum1:IDType>
+                <sum1:ID>FR52422961982</sum1:ID>
+            </sum1:IDOtro>
+        </sum1:IDDestinatario>
+    </sum1:Destinatarios>
+    <sum1:Desglose>
+        <sum1:DetalleDesglose>
+            <sum1:Impuesto>01</sum1:Impuesto>
+            <sum1:ClaveRegimen>01</sum1:ClaveRegimen>
+            <sum1:CalificacionOperacion>S1</sum1:CalificacionOperacion>
+            <sum1:TipoImpositivo>21.00</sum1:TipoImpositivo>
+            <sum1:BaseImponibleOimporteNoSujeto>100.00</sum1:BaseImponibleOimporteNoSujeto>
+            <sum1:CuotaRepercutida>21.00</sum1:CuotaRepercutida>
+        </sum1:DetalleDesglose>
+        <sum1:DetalleDesglose>
+            <sum1:Impuesto>01</sum1:Impuesto>
+            <sum1:ClaveRegimen>01</sum1:ClaveRegimen>
+            <sum1:CalificacionOperacion>S1</sum1:CalificacionOperacion>
+            <sum1:TipoImpositivo>10.00</sum1:TipoImpositivo>
+            <sum1:BaseImponibleOimporteNoSujeto>50.00</sum1:BaseImponibleOimporteNoSujeto>
+            <sum1:CuotaRepercutida>5.00</sum1:CuotaRepercutida>
+        </sum1:DetalleDesglose>
+    </sum1:Desglose>
+    <sum1:CuotaTotal>26.00</sum1:CuotaTotal>
+    <sum1:ImporteTotal>176.00</sum1:ImporteTotal>
+    <sum1:Encadenamiento>
+        <sum1:RegistroAnterior>
+            <sum1:IDEmisorFactura>00000000B</sum1:IDEmisorFactura>
+            <sum1:NumSerieFactura>PRUEBA-001</sum1:NumSerieFactura>
+            <sum1:FechaExpedicionFactura>01-06-2025</sum1:FechaExpedicionFactura>
+            <sum1:Huella>AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA</sum1:Huella>
+        </sum1:RegistroAnterior>
+    </sum1:Encadenamiento>
+    <sum1:SistemaInformatico>
+        <sum1:NombreRazon>El Nombre del Emisor, S.L.</sum1:NombreRazon>
+        <sum1:NIF>00000000B</sum1:NIF>
+        <sum1:NombreSistemaInformatico>Test SIF</sum1:NombreSistemaInformatico>
+        <sum1:IdSistemaInformatico>TS</sum1:IdSistemaInformatico>
+        <sum1:Version>0.0.1</sum1:Version>
+        <sum1:NumeroInstalacion>01234</sum1:NumeroInstalacion>
+        <sum1:TipoUsoPosibleSoloVerifactu>S</sum1:TipoUsoPosibleSoloVerifactu>
+        <sum1:TipoUsoPosibleMultiOT>N</sum1:TipoUsoPosibleMultiOT>
+        <sum1:IndicadorMultiplesOT>N</sum1:IndicadorMultiplesOT>
+    </sum1:SistemaInformatico>
+    <sum1:FechaHoraHusoGenRegistro>2025-06-02T11:22:33+02:00</sum1:FechaHoraHusoGenRegistro>
+    <sum1:TipoHuella>01</sum1:TipoHuella>
+    <sum1:Huella>8B042C064EE8260DE86766B4C4878DD1347377D00C7D7C97043E126B1215F2A6</sum1:Huella>
+</sum1:RegistroAlta>

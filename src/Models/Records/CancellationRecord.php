@@ -1,6 +1,7 @@
 <?php
 namespace josemmo\Verifactu\Models\Records;
 
+use josemmo\Verifactu\Exceptions\ImportException;
 use Symfony\Component\Validator\Constraints as Assert;
 use Symfony\Component\Validator\Context\ExecutionContextInterface;
 use UXML\UXML;
@@ -16,8 +17,29 @@ class CancellationRecord extends Record {
      *
      * @field SinRegistroPrevio
      */
+    #[Assert\NotNull]
     #[Assert\Type('boolean')]
     public bool $withoutPriorRecord = false;
+
+    /**
+     * Indicador de rechazo previo
+     *
+     * Para remitir un nuevo registro de facturación de anulación subsanado tras haber sido rechazado en su remisión
+     * inmediatamente anterior.
+     * Es decir, en el último envío que contenía ese registro de facturación de alta rechazado.
+     *
+     * @field RechazoPrevio
+     */
+    #[Assert\NotNull]
+    #[Assert\Type('boolean')]
+    public bool $isPriorRejection = false;
+
+    /**
+     * @inheritDoc
+     */
+    protected static function getRecordElementName(): string {
+        return 'RegistroAnulacion';
+    }
 
     /**
      * @inheritDoc
@@ -49,21 +71,35 @@ class CancellationRecord extends Record {
     /**
      * @inheritDoc
      */
-    protected function getRecordElementName(): string {
-        return 'RegistroAnulacion';
+    protected function importCustomProperties(UXML $recordElement): void {
+        // Invoice ID
+        $idFacturaElement = $recordElement->get('sum1:IDFactura');
+        if ($idFacturaElement === null) {
+            throw new ImportException('Missing <sum1:IDFactura /> element');
+        }
+        $this->invoiceId = InvoiceIdentifier::fromXml($idFacturaElement);
+
+        // Flags
+        $withoutPriorRecord = $recordElement->get('sum1:SinRegistroPrevio')?->asText() ?? 'N';
+        $isPriorRejection = $recordElement->get('sum1:RechazoPrevio')?->asText() ?? 'N';
+        $this->withoutPriorRecord = ($withoutPriorRecord === 'S');
+        $this->isPriorRejection = ($isPriorRejection === 'S');
     }
 
     /**
      * @inheritDoc
      */
     protected function exportCustomProperties(UXML $recordElement): void {
+        // Invoice ID
         $idFacturaElement = $recordElement->add('sum1:IDFactura');
-        $idFacturaElement->add('sum1:IDEmisorFacturaAnulada', $this->invoiceId->issuerId);
-        $idFacturaElement->add('sum1:NumSerieFacturaAnulada', $this->invoiceId->invoiceNumber);
-        $idFacturaElement->add('sum1:FechaExpedicionFacturaAnulada', $this->invoiceId->issueDate->format('d-m-Y'));
+        $this->invoiceId->export($idFacturaElement, true);
 
+        // Flags
         if ($this->withoutPriorRecord) {
             $recordElement->add('sum1:SinRegistroPrevio', 'S');
+        }
+        if ($this->isPriorRejection) {
+            $recordElement->add('sum1:RechazoPrevio', 'S');
         }
     }
 }

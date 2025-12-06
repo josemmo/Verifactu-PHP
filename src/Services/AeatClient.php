@@ -8,6 +8,7 @@ use josemmo\Verifactu\Exceptions\AeatException;
 use josemmo\Verifactu\Models\ComputerSystem;
 use josemmo\Verifactu\Models\Records\CancellationRecord;
 use josemmo\Verifactu\Models\Records\FiscalIdentifier;
+use josemmo\Verifactu\Models\Records\Record;
 use josemmo\Verifactu\Models\Records\RegistrationRecord;
 use josemmo\Verifactu\Models\Records\VoluntaryDiscontinuation;
 use josemmo\Verifactu\Models\Responses\AeatResponse;
@@ -19,9 +20,10 @@ use UXML\UXML;
  * Class to communicate with the AEAT web service endpoint for VERI*FACTU
  */
 class AeatClient {
+    /** SOAP envelope XML namespace */
     public const NS_SOAPENV = 'http://schemas.xmlsoap.org/soap/envelope/';
-    public const NS_SUM = 'https://www2.agenciatributaria.gob.es/static_files/common/internet/dep/aplicaciones/es/aeat/tike/cont/ws/SuministroLR.xsd';
-    public const NS_SUM1 = 'https://www2.agenciatributaria.gob.es/static_files/common/internet/dep/aplicaciones/es/aeat/tike/cont/ws/SuministroInformacion.xsd';
+    /** Client XML namespace */
+    public const NS_AEAT = 'https://www2.agenciatributaria.gob.es/static_files/common/internet/dep/aplicaciones/es/aeat/tike/cont/ws/SuministroLR.xsd';
 
     private readonly ComputerSystem $system;
     private readonly FiscalIdentifier $taxpayer;
@@ -31,6 +33,7 @@ class AeatClient {
     private ?FiscalIdentifier $representative = null;
     private ?VoluntaryDiscontinuation $voluntaryDiscontinuation = null;
     private bool $isProduction = true;
+    private bool $isEntitySeal = false;
 
     /**
      * Class constructor
@@ -107,6 +110,18 @@ class AeatClient {
     }
 
     /**
+     * Set entity seal
+     *
+     * @param bool $entitySeal Pass `true` for entity seal certificate, `false` for regular certificate
+     *
+     * @return $this This instance
+     */
+    public function setEntitySeal(bool $entitySeal): static {
+        $this->isEntitySeal = $entitySeal;
+        return $this;
+    }
+
+    /**
      * Send invoicing records
      *
      * @param (RegistrationRecord|CancellationRecord)[] $records Invoicing records
@@ -120,8 +135,8 @@ class AeatClient {
         // Build initial request
         $xml = UXML::newInstance('soapenv:Envelope', null, [
             'xmlns:soapenv' => self::NS_SOAPENV,
-            'xmlns:sum' => self::NS_SUM,
-            'xmlns:sum1' => self::NS_SUM1,
+            'xmlns:sum' => self::NS_AEAT,
+            'xmlns:sum1' => Record::NS,
         ]);
         $xml->add('soapenv:Header');
         $baseElement = $xml->add('soapenv:Body')->add('sum:RegFactuSistemaFacturacion');
@@ -176,6 +191,9 @@ class AeatClient {
      * @return string Base URI
      */
     private function getBaseUri(): string {
+        if ($this->isEntitySeal) {
+            return $this->isProduction ? 'https://www10.agenciatributaria.gob.es' : 'https://prewww10.aeat.es';
+        }
         return $this->isProduction ? 'https://www1.agenciatributaria.gob.es' : 'https://prewww1.aeat.es';
     }
 }

@@ -6,18 +6,34 @@ jobs:
   ci:
     name: Run tests
     runs-on: ubuntu-latest
-    continue-on-error: ${{ matrix.experimental || false }}
+    continue-on-error: ${{ matrix.experimental }}
     strategy:
       fail-fast: false
       matrix:
-        php-version: ['8.2', '8.3', '8.4']
+        php-version: ['8.2', '8.3', '8.4', '8.5']
+        legacy: [true, false]
+        experimental: [false]
         include:
-          - php-version: '8.5'
+          - php-version: '8.6'
+            legacy: false
             experimental: true
     steps:
       # Download code from repository
       - name: Checkout code
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
+
+      # Get Composer cache directory
+      - name: Get Composer cache directory
+        id: composer-cache
+        run: echo "dir=$(composer config cache-files-dir)" >> $GITHUB_OUTPUT
+
+      # Cache dependencies
+      - name: Cache dependencies
+        uses: actions/cache@v4
+        with:
+          path: ${{ steps.composer-cache.outputs.dir }}
+          key: ${{ runner.os }}-composer-${{ hashFiles('**/composer.json') }}
+          restore-keys: ${{ runner.os }}-composer-
 
       # Setup PHP
       - name: Setup PHP
@@ -29,6 +45,12 @@ jobs:
       # Setup Composer
       - name: Setup Composer
         run: composer install
+
+      # Install legacy dependencies
+      # We do this step to ensure compatibility with LTS versions of Symfony dependencies
+      - name: Install legacy dependencies
+        if: ${{ success() && matrix.legacy }}
+        run: composer require 'symfony/validator:6.4.*'
 
       # Run linter
       - name: Run linter

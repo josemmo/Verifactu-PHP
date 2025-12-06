@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<sum1:RegistroAnulacion xmlns:sum1="https://www2.agenciatributaria.gob.es/static_files/common/internet/dep/aplicaciones/es/aeat/tike/cont/ws/SuministroInformacion.xsd">
+    <sum1:IDVersion>1.0</sum1:IDVersion>
+    <sum1:IDFactura>
+        <sum1:IDEmisorFacturaAnulada>A00000000</sum1:IDEmisorFacturaAnulada>
+        <sum1:NumSerieFacturaAnulada>12345679/G34</sum1:NumSerieFacturaAnulada>
+        <sum1:FechaExpedicionFacturaAnulada>01-01-2024</sum1:FechaExpedicionFacturaAnulada>
+    </sum1:IDFactura>
+    <sum1:RechazoPrevio>S</sum1:RechazoPrevio>
+    <sum1:Encadenamiento>
+        <sum1:RegistroAnterior>
+            <sum1:IDEmisorFactura>A00000000</sum1:IDEmisorFactura>
+            <sum1:NumSerieFactura>12345679/G34</sum1:NumSerieFactura>
+            <sum1:FechaExpedicionFactura>01-01-2024</sum1:FechaExpedicionFactura>
+            <sum1:Huella>F7B94CFD8924EDFF273501B01EE5153E4CE8F259766F88CF6ACB8935802A2B97</sum1:Huella>
+        </sum1:RegistroAnterior>
+    </sum1:Encadenamiento>
+    <sum1:SistemaInformatico>
+        <sum1:NombreRazon>Perico de los Palotes, S.A.</sum1:NombreRazon>
+        <sum1:NIF>A00000000</sum1:NIF>
+        <sum1:NombreSistemaInformatico>Test SIF</sum1:NombreSistemaInformatico>
+        <sum1:IdSistemaInformatico>TS</sum1:IdSistemaInformatico>
+        <sum1:Version>0.0.1</sum1:Version>
+        <sum1:NumeroInstalacion>01234</sum1:NumeroInstalacion>
+        <sum1:TipoUsoPosibleSoloVerifactu>S</sum1:TipoUsoPosibleSoloVerifactu>
+        <sum1:TipoUsoPosibleMultiOT>N</sum1:TipoUsoPosibleMultiOT>
+        <sum1:IndicadorMultiplesOT>N</sum1:IndicadorMultiplesOT>
+    </sum1:SistemaInformatico>
+    <sum1:FechaHoraHusoGenRegistro>2024-01-01T19:20:40+01:00</sum1:FechaHoraHusoGenRegistro>
+    <sum1:TipoHuella>01</sum1:TipoHuella>
+    <sum1:Huella>5DCAFD630E24AA03BCE2D3E6F595BAE802555F4604AF830F0340F3338B4935F6</sum1:Huella>
+</sum1:RegistroAnulacion>

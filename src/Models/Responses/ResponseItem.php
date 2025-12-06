@@ -16,6 +16,7 @@ class ResponseItem extends Model {
      *
      * @field Subsanacion
      */
+    #[Assert\NotNull]
     #[Assert\Type('boolean')]
     public bool $isCorrection = false;
 
