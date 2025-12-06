@@ -42,13 +42,11 @@ class AeatClient {
     public function __construct(
         ComputerSystem $system,
         FiscalIdentifier $taxpayer,
-        ?Client $httpClient = null,
-        ?VoluntaryDiscontinuation $voluntaryDiscontinuation = null,
+        ?Client $httpClient = null
     ) {
         $this->system = $system;
         $this->taxpayer = $taxpayer;
         $this->client = $httpClient ?? new Client();
-        $this->voluntaryDiscontinuation = $voluntaryDiscontinuation;
     }
 
     /**
@@ -93,6 +91,18 @@ class AeatClient {
      */
     public function setProduction(bool $production): static {
         $this->isProduction = $production;
+        return $this;
+    }
+
+    /**
+     * Set voluntary discontinuation
+     *
+     * @param VoluntaryDiscontinuation|null $voluntaryDiscontinuation Sends the date of which the company will stop using VERI*FACTU.
+     *
+     * @return $this This instance
+     */
+    public function setVoluntaryDiscontinuation(?VoluntaryDiscontinuation $voluntaryDiscontinuation): static {
+        $this->voluntaryDiscontinuation = $voluntaryDiscontinuation;
         return $this;
     }
 
