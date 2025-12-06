@@ -10,6 +10,7 @@ use josemmo\Verifactu\Models\Records\CancellationRecord;
 use josemmo\Verifactu\Models\Records\FiscalIdentifier;
 use josemmo\Verifactu\Models\Records\Record;
 use josemmo\Verifactu\Models\Records\RegistrationRecord;
+use josemmo\Verifactu\Models\Records\VoluntaryDiscontinuation;
 use josemmo\Verifactu\Models\Responses\AeatResponse;
 use Psr\Http\Message\ResponseInterface;
 use SensitiveParameter;
@@ -30,6 +31,7 @@ class AeatClient {
     private ?string $certificatePath = null;
     private ?string $certificatePassword = null;
     private ?FiscalIdentifier $representative = null;
+    private ?VoluntaryDiscontinuation $voluntaryDiscontinuation = null;
     private bool $isProduction = true;
     private bool $isEntitySeal = false;
 
@@ -43,7 +45,7 @@ class AeatClient {
     public function __construct(
         ComputerSystem $system,
         FiscalIdentifier $taxpayer,
-        ?Client $httpClient = null,
+        ?Client $httpClient = null
     ) {
         $this->system = $system;
         $this->taxpayer = $taxpayer;
@@ -96,6 +98,18 @@ class AeatClient {
     }
 
     /**
+     * Set voluntary discontinuation
+     *
+     * @param VoluntaryDiscontinuation|null $voluntaryDiscontinuation Sends the date of which the company will stop using VERI*FACTU.
+     *
+     * @return $this This instance
+     */
+    public function setVoluntaryDiscontinuation(?VoluntaryDiscontinuation $voluntaryDiscontinuation): static {
+        $this->voluntaryDiscontinuation = $voluntaryDiscontinuation;
+        return $this;
+    }
+
+    /**
      * Set entity seal
      *
      * @param bool $entitySeal Pass `true` for entity seal certificate, `false` for regular certificate
@@ -136,6 +150,11 @@ class AeatClient {
             $representanteElement = $cabeceraElement->add('sum1:Representante');
             $representanteElement->add('sum1:NombreRazon', $this->representative->name);
             $representanteElement->add('sum1:NIF', $this->representative->nif);
+        }
+        if ($this->voluntaryDiscontinuation !== null && $this->voluntaryDiscontinuation->endDate !== null) {
+            $remisionVoluntariaElement = $cabeceraElement->add('sum1:RemisionVoluntaria');
+            $remisionVoluntariaElement->add('sum1:FechaFinVeriFactu', $this->voluntaryDiscontinuation->endDate->format('d-m-Y'));
+            $remisionVoluntariaElement->add('sum1:Incidencia', $this->voluntaryDiscontinuation->incident ? 'S' : 'N');
         }
 
         // Add registration records
