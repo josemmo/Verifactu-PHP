@@ -9,6 +9,7 @@ use GuzzleHttp\HandlerStack;
 use GuzzleHttp\Psr7\Request;
 use GuzzleHttp\Psr7\Response;
 use josemmo\Verifactu\Exceptions\AeatException;
+use josemmo\Verifactu\Exceptions\AeatResponseException;
 use josemmo\Verifactu\Models\ComputerSystem;
 use josemmo\Verifactu\Models\Records\CancellationRecord;
 use josemmo\Verifactu\Models\Records\FiscalIdentifier;
@@ -69,7 +70,7 @@ final class AeatClientTest extends TestCase {
     }
 
     public function testThrowsExceptionForMalformedXmlResponse(): void {
-        $this->expectException(AeatException::class);
+        $this->expectException(AeatResponseException::class);
         $this->expectExceptionMessage('Failed to parse XML response');
         $client = $this->getMockedClient(new Response(200, [], '<element>Malformed XML</notClosingElement>'));
         $record = $this->getMockedRecord();
@@ -80,6 +81,14 @@ final class AeatClientTest extends TestCase {
         $this->expectException(AeatException::class);
         $this->expectExceptionMessage('Missing <tikR:RespuestaRegFactuSistemaFacturacion /> element from response');
         $client = $this->getMockedClient(new Response(401, [], '<html><body>Unauthorized</body></html>'));
+        $record = $this->getMockedRecord();
+        $client->send([$record])->wait();
+    }
+
+    public function testThrowsExceptionForUnexpectedCertificateResponse(): void {
+        $this->expectException(AeatResponseException::class);
+        $this->expectExceptionMessage('Failed to parse XML response');
+        $client = $this->getMockedClient(new Response(200, [], '<!DOCTYPE html>\r\n<html><body>Unauthorized\r\n</body></html>'));
         $record = $this->getMockedRecord();
         $client->send([$record])->wait();
     }
