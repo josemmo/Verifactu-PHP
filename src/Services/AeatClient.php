@@ -4,7 +4,7 @@ namespace josemmo\Verifactu\Services;
 use GuzzleHttp\Client;
 use GuzzleHttp\Promise\PromiseInterface;
 use InvalidArgumentException;
-use josemmo\Verifactu\Exceptions\AeatException;
+use josemmo\Verifactu\Exceptions\AeatResponseException;
 use josemmo\Verifactu\Models\ComputerSystem;
 use josemmo\Verifactu\Models\Records\CancellationRecord;
 use josemmo\Verifactu\Models\Records\FiscalIdentifier;
@@ -115,7 +115,7 @@ class AeatClient {
      *
      * @return PromiseInterface<AeatResponse> Response from service
      *
-     * @throws AeatException            if AEAT server returned an error
+     * @throws AeatResponseException    if AEAT server returned an error
      * @throws ClientExceptionInterface if request sending failed
      */
     public function send(array $records): PromiseInterface { /** @phpstan-ignore generics.notGeneric */
@@ -168,7 +168,11 @@ class AeatClient {
                 try {
                     return UXML::fromString($response);
                 } catch (InvalidArgumentException $e) {
-                    throw new AeatException('Failed to parse XML response', previous: $e);
+                    throw new AeatResponseException(
+                        $response,
+                        'Failed to parse XML response',
+                        previous: $e
+                    );
                 }
             })
             ->then(fn (UXML $xml): AeatResponse => AeatResponse::from($xml));
