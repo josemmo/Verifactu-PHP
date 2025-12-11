@@ -29,6 +29,7 @@
     },
     "require": {
         "php": ">=8.2",
+        "ext-libxml": "*",
         "guzzlehttp/guzzle": "^7.10",
         "josemmo/uxml": "^0.2.0",
         "symfony/validator": "^6.4|^7.4|^8.0"
