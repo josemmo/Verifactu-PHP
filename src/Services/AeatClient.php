@@ -109,17 +109,13 @@ class AeatClient {
     }
 
     /**
-     * Send invoicing records
+     * Builds the XML body of the request
      *
      * @param (RegistrationRecord|CancellationRecord)[] $records Invoicing records
      *
-     * @return PromiseInterface<AeatResponse> Response from service
-     *
-     * @throws AeatException            if AEAT server returned an error
-     * @throws ClientExceptionInterface if request sending failed
+     * @return UXML XML encoded request
      */
-    public function send(array $records): PromiseInterface { /** @phpstan-ignore generics.notGeneric */
-        // Build initial request
+    protected function buildRequestBody(array $records): UXML {
         $xml = UXML::newInstance('soapenv:Envelope', null, [
             'xmlns:soapenv' => self::NS_SOAPENV,
             'xmlns:sum' => self::NS_AEAT,
@@ -144,7 +140,17 @@ class AeatClient {
             $record->export($baseElement->add('sum:RegistroFactura'), $this->system);
         }
 
-        // Send request
+        return $xml;
+    }
+
+    /**
+     * Builds the options for the requets
+     *
+     * @param UXML $body Body of the petition
+     *
+     * @return array<string, mixed> Request options
+     */
+    protected function buildRequestOptions(UXML $body): array {
         $options = [
             'base_uri' => $this->getBaseUri(),
             'http_errors' => false,
@@ -152,17 +158,32 @@ class AeatClient {
                 'Content-Type' => 'text/xml',
                 'User-Agent' => "Mozilla/5.0 (compatible; {$this->system->name}/{$this->system->version})",
             ],
-            'body' => $xml->asXML(),
+            'body' => $body->asXML(),
         ];
         if ($this->certificatePath !== null) {
             $options['cert'] = ($this->certificatePassword === null) ?
                 $this->certificatePath :
                 [$this->certificatePath, $this->certificatePassword];
         }
-        $responsePromise = $this->client->postAsync('/wlpl/TIKE-CONT/ws/SistemaFacturacion/VerifactuSOAP', $options);
 
-        // Parse and return response
-        return $responsePromise
+        return $options;
+    }
+
+    /**
+     * Send invoicing records and returns the promise
+     *
+     * @param (RegistrationRecord|CancellationRecord)[] $records Invoicing records
+     *
+     * @return PromiseInterface<UXML> Response from service
+     *
+     * @throws AeatException            if AEAT server returned an error
+     * @throws ClientExceptionInterface if request sending failed
+     */
+    public function sendRequest(array $records): PromiseInterface { /** @phpstan-ignore generics.notGeneric */
+        $body = $this->buildRequestBody($records);
+        $options = $this->buildRequestOptions($body);
+
+        return $this->client->postAsync('/wlpl/TIKE-CONT/ws/SistemaFacturacion/VerifactuSOAP', $options)
             ->then(fn (ResponseInterface $response): string => $response->getBody()->getContents())
             ->then(function (string $response): UXML {
                 try {
@@ -170,7 +191,22 @@ class AeatClient {
                 } catch (InvalidArgumentException $e) {
                     throw new AeatException('Failed to parse XML response', previous: $e);
                 }
-            })
+            });
+    }
+
+    /**
+     * Send invoicing records
+     *
+     * @param (RegistrationRecord|CancellationRecord)[] $records Invoicing records
+     *
+     * @return PromiseInterface<AeatResponse> Response from service
+     *
+     * @throws AeatException            if AEAT server returned an error
+     * @throws ClientExceptionInterface if request sending failed
+     */
+    public function send(array $records): PromiseInterface { /** @phpstan-ignore generics.notGeneric */
+        // Send request
+        return $this->sendRequest($records)
             ->then(fn (UXML $xml): AeatResponse => AeatResponse::from($xml));
     }
 
