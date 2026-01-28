@@ -6,12 +6,6 @@ use GuzzleHttp\Promise\PromiseInterface;
 use InvalidArgumentException;
 use josemmo\Verifactu\Exceptions\AeatException;
 use josemmo\Verifactu\Models\ComputerSystem;
-use josemmo\Verifactu\Models\Records\CancellationRecord;
-use josemmo\Verifactu\Models\Records\FiscalIdentifier;
-use josemmo\Verifactu\Models\Records\Record;
-use josemmo\Verifactu\Models\Records\RegistrationRecord;
-use josemmo\Verifactu\Models\Responses\AeatResponse;
-use Psr\Http\Client\ClientExceptionInterface;
 use Psr\Http\Message\ResponseInterface;
 use SensitiveParameter;
 use UXML\UXML;
@@ -19,36 +13,55 @@ use UXML\UXML;
 /**
  * Class to communicate with the AEAT web service endpoint for VERI*FACTU
  */
-class AeatClient {
+abstract class AeatClient {
     /** SOAP envelope XML namespace */
     public const NS_SOAPENV = 'http://schemas.xmlsoap.org/soap/envelope/';
-    /** Client XML namespace */
-    public const NS_AEAT = 'https://www2.agenciatributaria.gob.es/static_files/common/internet/dep/aplicaciones/es/aeat/tike/cont/ws/SuministroLR.xsd';
 
-    private readonly ComputerSystem $system;
-    private readonly FiscalIdentifier $taxpayer;
-    private readonly Client $client;
+    protected readonly ComputerSystem $system;
+    protected readonly Client $client;
     private ?string $certificatePath = null;
     private ?string $certificatePassword = null;
-    private ?FiscalIdentifier $representative = null;
     private bool $isProduction = true;
     private bool $isEntitySeal = false;
 
     /**
+     * Builds the XML body for the request
+     *
+     * @return UXML XML encoded request
+     */
+    abstract public function createBody(): UXML;
+
+    /**
+     * Send the request to AEAT
+     *
+     * @return PromiseInterface Response from service
+     */
+    abstract public function send(): PromiseInterface;
+
+    /**
      * Class constructor
      *
-     * @param ComputerSystem   $system     Computer system details
-     * @param FiscalIdentifier $taxpayer   Taxpayer details (party that issues the invoices)
-     * @param Client|null      $httpClient Custom HTTP client, leave empty to create a new one
+     * @param ComputerSystem $system     Computer system details
+     * @param Client|null    $httpClient Custom HTTP client, leave empty to create a new one
      */
     public function __construct(
         ComputerSystem $system,
-        FiscalIdentifier $taxpayer,
         ?Client $httpClient = null,
     ) {
         $this->system = $system;
-        $this->taxpayer = $taxpayer;
         $this->client = $httpClient ?? new Client();
+    }
+
+    /**
+     * Get base URI of web service
+     *
+     * @return string Base URI
+     */
+    protected function getBaseUri(): string {
+        if ($this->isEntitySeal) {
+            return $this->isProduction ? 'https://www10.agenciatributaria.gob.es' : 'https://prewww10.aeat.es';
+        }
+        return $this->isProduction ? 'https://www1.agenciatributaria.gob.es' : 'https://prewww1.aeat.es';
     }
 
     /**
@@ -67,20 +80,6 @@ class AeatClient {
     ): static {
         $this->certificatePath = $certificatePath;
         $this->certificatePassword = $certificatePassword;
-        return $this;
-    }
-
-    /**
-     * Set representative
-     *
-     * NOTE: Requires the represented fiscal entity to fill the "GENERALLEY58" form at AEAT.
-     *
-     * @param FiscalIdentifier|null $representative Representative details (party that sends the invoices)
-     *
-     * @return $this This instance
-     */
-    public function setRepresentative(?FiscalIdentifier $representative): static {
-        $this->representative = $representative;
         return $this;
     }
 
@@ -109,48 +108,13 @@ class AeatClient {
     }
 
     /**
-     * Builds the XML body of the request
-     *
-     * @param (RegistrationRecord|CancellationRecord)[] $records Invoicing records
-     *
-     * @return UXML XML encoded request
-     */
-    protected function buildRequestBody(array $records): UXML {
-        $xml = UXML::newInstance('soapenv:Envelope', null, [
-            'xmlns:soapenv' => self::NS_SOAPENV,
-            'xmlns:sum' => self::NS_AEAT,
-            'xmlns:sum1' => Record::NS,
-        ]);
-        $xml->add('soapenv:Header');
-        $baseElement = $xml->add('soapenv:Body')->add('sum:RegFactuSistemaFacturacion');
-
-        // Add header
-        $cabeceraElement = $baseElement->add('sum:Cabecera');
-        $obligadoEmisionElement = $cabeceraElement->add('sum1:ObligadoEmision');
-        $obligadoEmisionElement->add('sum1:NombreRazon', $this->taxpayer->name);
-        $obligadoEmisionElement->add('sum1:NIF', $this->taxpayer->nif);
-        if ($this->representative !== null) {
-            $representanteElement = $cabeceraElement->add('sum1:Representante');
-            $representanteElement->add('sum1:NombreRazon', $this->representative->name);
-            $representanteElement->add('sum1:NIF', $this->representative->nif);
-        }
-
-        // Add registration records
-        foreach ($records as $record) {
-            $record->export($baseElement->add('sum:RegistroFactura'), $this->system);
-        }
-
-        return $xml;
-    }
-
-    /**
      * Builds the options for the requets
      *
-     * @param UXML $body Body of the petition
+     * @param ?UXML $body Already generated body
      *
      * @return array<string, mixed> Request options
      */
-    protected function buildRequestOptions(UXML $body): array {
+    protected function createOptions(?UXML $body = null): array {
         $options = [
             'base_uri' => $this->getBaseUri(),
             'http_errors' => false,
@@ -158,7 +122,7 @@ class AeatClient {
                 'Content-Type' => 'text/xml',
                 'User-Agent' => "Mozilla/5.0 (compatible; {$this->system->name}/{$this->system->version})",
             ],
-            'body' => $body->asXML(),
+            'body' => $body ?? $this->createBody()->asXML(),
         ];
         if ($this->certificatePath !== null) {
             $options['cert'] = ($this->certificatePassword === null) ?
@@ -170,20 +134,17 @@ class AeatClient {
     }
 
     /**
-     * Send invoicing records and returns the promise
+     * Send the request without casting the reponse
      *
-     * @param (RegistrationRecord|CancellationRecord)[] $records Invoicing records
+     * @param ?UXML $body Already generated body
      *
      * @return PromiseInterface<UXML> Response from service
-     *
-     * @throws AeatException            if AEAT server returned an error
-     * @throws ClientExceptionInterface if request sending failed
      */
-    public function sendRequest(array $records): PromiseInterface { /** @phpstan-ignore generics.notGeneric */
-        $body = $this->buildRequestBody($records);
-        $options = $this->buildRequestOptions($body);
-
-        return $this->client->postAsync('/wlpl/TIKE-CONT/ws/SistemaFacturacion/VerifactuSOAP', $options)
+    public function sendRequest(?UXML $body = null): PromiseInterface { /** @phpstan-ignore generics.notGeneric */
+        return $this->client->postAsync(
+            '/wlpl/TIKE-CONT/ws/SistemaFacturacion/VerifactuSOAP',
+            $this->createOptions($body)
+        )
             ->then(fn (ResponseInterface $response): string => $response->getBody()->getContents())
             ->then(function (string $response): UXML {
                 try {
@@ -192,33 +153,5 @@ class AeatClient {
                     throw new AeatException('Failed to parse XML response', previous: $e);
                 }
             });
-    }
-
-    /**
-     * Send invoicing records
-     *
-     * @param (RegistrationRecord|CancellationRecord)[] $records Invoicing records
-     *
-     * @return PromiseInterface<AeatResponse> Response from service
-     *
-     * @throws AeatException            if AEAT server returned an error
-     * @throws ClientExceptionInterface if request sending failed
-     */
-    public function send(array $records): PromiseInterface { /** @phpstan-ignore generics.notGeneric */
-        // Send request
-        return $this->sendRequest($records)
-            ->then(fn (UXML $xml): AeatResponse => AeatResponse::from($xml));
-    }
-
-    /**
-     * Get base URI of web service
-     *
-     * @return string Base URI
-     */
-    private function getBaseUri(): string {
-        if ($this->isEntitySeal) {
-            return $this->isProduction ? 'https://www10.agenciatributaria.gob.es' : 'https://prewww10.aeat.es';
-        }
-        return $this->isProduction ? 'https://www1.agenciatributaria.gob.es' : 'https://prewww1.aeat.es';
     }
 }

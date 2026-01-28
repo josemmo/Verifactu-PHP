@@ -13,19 +13,19 @@ use josemmo\Verifactu\Models\ComputerSystem;
 use josemmo\Verifactu\Models\Records\CancellationRecord;
 use josemmo\Verifactu\Models\Records\FiscalIdentifier;
 use josemmo\Verifactu\Models\Records\InvoiceIdentifier;
-use josemmo\Verifactu\Services\AeatClient;
+use josemmo\Verifactu\Services\AeatClientRegistration;
 use PHPUnit\Framework\TestCase;
 use Psr\Http\Client\ClientExceptionInterface;
 
-final class AeatClientTest extends TestCase {
+final class AeatClientRegistrationTest extends TestCase {
     /**
      * Get mocked AEAT client
      *
      * @param Response|ClientExceptionInterface $response Mocked response
      *
-     * @return AeatClient AEAT client instance
+     * @return AeatClientRegistration AEAT client instance
      */
-    private function getMockedClient(Response|ClientExceptionInterface $response): AeatClient {
+    private function getMockedClient(Response|ClientExceptionInterface $response): AeatClientRegistration {
         // Create HTTP client mock
         $mock = new MockHandler([$response]);
         $httpClient = new Client([
@@ -47,7 +47,7 @@ final class AeatClientTest extends TestCase {
 
         // Build AEAT client
         $taxpayer = new FiscalIdentifier('Perico de los Palotes, S.A.', 'A00000000');
-        $client = new AeatClient($system, $taxpayer, $httpClient);
+        $client = new AeatClientRegistration($system, $taxpayer, $httpClient);
 
         return $client;
     }
