@@ -9,7 +9,6 @@ use josemmo\Verifactu\Models\Records\FiscalIdentifier;
 use josemmo\Verifactu\Models\Records\Record;
 use josemmo\Verifactu\Models\Responses\AeatResponse;
 use Psr\Http\Client\ClientExceptionInterface;
-use Symfony\Component\Validator\Constraints as Assert;
 use UXML\UXML;
 
 /**
@@ -21,17 +20,6 @@ class AeatClientRegistration extends AeatClient {
 
     private readonly FiscalIdentifier $taxpayer;
     private ?FiscalIdentifier $representative = null;
-
-    /**
-     * Registros a enviar
-     *
-     * @var array<Record>
-     *
-     * @field Records
-     */
-    #[Assert\Valid]
-    #[Assert\Count(min: 1, max: 1000)]
-    public array $records = [];
 
     /**
      * Class constructor
@@ -66,9 +54,11 @@ class AeatClientRegistration extends AeatClient {
     /**
      * Builds the XML body of the request
      *
+     * @param array<Record> $records Request already generated or array of records to be sent
+     *
      * @return UXML XML encoded request
      */
-    public function createBody(): UXML {
+    public function createBody(array $records): UXML {
         $xml = UXML::newInstance('soapenv:Envelope', null, [
             'xmlns:soapenv' => self::NS_SOAPENV,
             'xmlns:sum' => self::NS_AEAT,
@@ -89,7 +79,7 @@ class AeatClientRegistration extends AeatClient {
         }
 
         // Add registration records
-        foreach ($this->records as $record) {
+        foreach ($records as $record) {
             $record->export($baseElement->add('sum:RegistroFactura'), $this->system);
         }
 
@@ -99,21 +89,20 @@ class AeatClientRegistration extends AeatClient {
     /**
      * Send invoicing records
      *
-     * @param null|UXML|array<Record> $body Request already generated or array of records to be sent
+     * @param UXML|array<Record> $records Request already generated or array of records to be sent
      *
      * @return PromiseInterface<AeatResponse> Response from service
      *
      * @throws AeatException            if AEAT server returned an error
      * @throws ClientExceptionInterface if request sending failed
      */
-    public function send(null|UXML|array $body = null): PromiseInterface { /** @phpstan-ignore generics.notGeneric */
-        if (is_array($body)) {
-            $this->records = $body;
-            $body = null;
+    public function send(UXML|array $records): PromiseInterface { /** @phpstan-ignore generics.notGeneric */
+        if (is_array($records)) {
+            $records = $this->createBody($records);
         }
 
         // Send request
-        return $this->sendRequest($body)
+        return $this->sendRequest($records)
             ->then(fn (UXML $xml): AeatResponse => AeatResponse::from($xml));
     }
 }

@@ -6,6 +6,7 @@ use GuzzleHttp\Promise\PromiseInterface;
 use InvalidArgumentException;
 use josemmo\Verifactu\Exceptions\AeatException;
 use josemmo\Verifactu\Models\ComputerSystem;
+use josemmo\Verifactu\Models\Records\Record;
 use Psr\Http\Message\ResponseInterface;
 use SensitiveParameter;
 use UXML\UXML;
@@ -27,16 +28,20 @@ abstract class AeatClient {
     /**
      * Builds the XML body for the request
      *
+     * @param array<Record> $content Content used to crete the body
+     *
      * @return UXML XML encoded request
      */
-    abstract public function createBody(): UXML;
+    abstract public function createBody(array $content): UXML;
 
     /**
      * Send the request to AEAT
      *
+     * @param UXML|array<Record> $body Request already generated or array of records to be sent
+     *
      * @return PromiseInterface Response from service
      */
-    abstract public function send(): PromiseInterface;
+    abstract public function send(UXML|array $body): PromiseInterface;
 
     /**
      * Class constructor
@@ -110,11 +115,11 @@ abstract class AeatClient {
     /**
      * Builds the options for the requets
      *
-     * @param ?UXML $body Already generated body
+     * @param UXML $body Already generated body
      *
      * @return array<string, mixed> Request options
      */
-    protected function createOptions(?UXML $body = null): array {
+    protected function createOptions(UXML $body): array {
         $options = [
             'base_uri' => $this->getBaseUri(),
             'http_errors' => false,
@@ -122,7 +127,7 @@ abstract class AeatClient {
                 'Content-Type' => 'text/xml',
                 'User-Agent' => "Mozilla/5.0 (compatible; {$this->system->name}/{$this->system->version})",
             ],
-            'body' => $body ?? $this->createBody()->asXML(),
+            'body' => $body->asXML(),
         ];
         if ($this->certificatePath !== null) {
             $options['cert'] = ($this->certificatePassword === null) ?
@@ -136,11 +141,11 @@ abstract class AeatClient {
     /**
      * Send the request without casting the reponse
      *
-     * @param ?UXML $body Already generated body
+     * @param UXML $body Already generated body
      *
      * @return PromiseInterface<UXML> Response from service
      */
-    public function sendRequest(?UXML $body = null): PromiseInterface { /** @phpstan-ignore generics.notGeneric */
+    public function sendRequest(UXML $body): PromiseInterface { /** @phpstan-ignore generics.notGeneric */
         return $this->client->postAsync(
             '/wlpl/TIKE-CONT/ws/SistemaFacturacion/VerifactuSOAP',
             $this->createOptions($body)
