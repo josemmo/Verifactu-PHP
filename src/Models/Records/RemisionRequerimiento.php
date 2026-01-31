@@ -13,8 +13,8 @@ class RemisionRequerimiento extends Model {
     /**
      * Class constructor
      *
-     * @param string   $requirementReference Reference to the requirement
-     * @param bool|null $isRequirementEnd    End of requirement, to be set when the requirement is completed
+     * @param string    $requirementReference Reference to the requirement
+     * @param bool|null $isRequirementEnd     End of requirement, to be set when the requirement is completed
      */
     public function __construct(
         string $requirementReference,
