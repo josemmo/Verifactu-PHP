@@ -1,135 +1,94 @@
 <?php
 namespace josemmo\Verifactu\Tests\Services;
 
+use DateTimeImmutable;
+use GuzzleHttp\Client;
+use GuzzleHttp\Exception\ConnectException;
+use GuzzleHttp\Handler\MockHandler;
+use GuzzleHttp\HandlerStack;
+use GuzzleHttp\Psr7\Request;
+use GuzzleHttp\Psr7\Response;
+use josemmo\Verifactu\Exceptions\AeatException;
 use josemmo\Verifactu\Models\ComputerSystem;
+use josemmo\Verifactu\Models\Records\CancellationRecord;
 use josemmo\Verifactu\Models\Records\FiscalIdentifier;
-use josemmo\Verifactu\Models\Records\RemisionRequerimiento;
+use josemmo\Verifactu\Models\Records\InvoiceIdentifier;
 use josemmo\Verifactu\Services\AeatClient;
 use PHPUnit\Framework\TestCase;
-use UXML\UXML;
+use Psr\Http\Client\ClientExceptionInterface;
 
 final class AeatClientTest extends TestCase {
-    private function createAeatClient(): AeatClient {
+    /**
+     * Get mocked AEAT client
+     *
+     * @param Response|ClientExceptionInterface $response Mocked response
+     *
+     * @return AeatClient AEAT client instance
+     */
+    private function getMockedClient(Response|ClientExceptionInterface $response): AeatClient {
+        // Create HTTP client mock
+        $mock = new MockHandler([$response]);
+        $httpClient = new Client([
+            'handler' => HandlerStack::create($mock),
+        ]);
+
+        // Build computer system
         $system = new ComputerSystem();
-        $system->vendorName = 'Test Vendor';
+        $system->vendorName = 'Perico de los Palotes, S.A.';
         $system->vendorNif = 'A00000000';
-        $system->name = 'Test System';
-        $system->id = '01';
-        $system->version = '1.0';
-        $system->installationNumber = 'INST001';
+        $system->name = 'Test SIF';
+        $system->id = 'XX';
+        $system->version = '0.0.1';
+        $system->installationNumber = 'ABC0123';
         $system->onlySupportsVerifactu = true;
-        $system->supportsMultipleTaxpayers = false;
+        $system->supportsMultipleTaxpayers = true;
         $system->hasMultipleTaxpayers = false;
+        $system->validate();
 
-        $taxpayer = new FiscalIdentifier('Test Taxpayer', 'B00000000');
+        // Build AEAT client
+        $taxpayer = new FiscalIdentifier('Perico de los Palotes, S.A.', 'A00000000');
+        $client = new AeatClient($system, $taxpayer, $httpClient);
 
-        return new AeatClient($system, $taxpayer);
+        return $client;
     }
 
     /**
-     * Build XML structure and return the Cabecera element with RemisionRequerimiento added if set
+     * Get mocked record
      *
-     * @param AeatClient $client Client instance
-     *
-     * @return UXML Cabecera element
+     * @return CancellationRecord Record instance
      */
-    private function buildCabeceraXml(AeatClient $client): UXML {
-        $xml = UXML::newInstance('soapenv:Envelope', null, [
-            'xmlns:soapenv' => AeatClient::NS_SOAPENV,
-            'xmlns:sum' => AeatClient::NS_AEAT,
-            'xmlns:sum1' => \josemmo\Verifactu\Models\Records\Record::NS,
-        ]);
-        $xml->add('soapenv:Header');
-        $baseElement = $xml->add('soapenv:Body')->add('sum:RegFactuSistemaFacturacion');
-
-        $cabeceraElement = $baseElement->add('sum:Cabecera');
-        $obligadoEmisionElement = $cabeceraElement->add('sum1:ObligadoEmision');
-
-        $reflection = new \ReflectionClass($client);
-        $taxpayerProperty = $reflection->getProperty('taxpayer');
-        $taxpayerProperty->setAccessible(true);
-        $taxpayer = $taxpayerProperty->getValue($client);
-
-        $obligadoEmisionElement->add('sum1:NombreRazon', $taxpayer->name);
-        $obligadoEmisionElement->add('sum1:NIF', $taxpayer->nif);
-
-        $remisionProperty = $reflection->getProperty('remisionRequerimiento');
-        $remisionProperty->setAccessible(true);
-        $remisionRequerimiento = $remisionProperty->getValue($client);
-
-        if ($remisionRequerimiento !== null) {
-            $remisionRequerimientoElement = $cabeceraElement->add('sum1:RemisionRequerimiento');
-            $remisionRequerimientoElement->add('sum1:RefRequerimiento', $remisionRequerimiento->requirementReference);
-            $remisionRequerimientoElement->add('sum1:FinRequerimiento', $remisionRequerimiento->isRequirementEnd ? 'S' : 'N');
-        }
-
-        return $cabeceraElement;
+    private function getMockedRecord(): CancellationRecord {
+        $record = new CancellationRecord();
+        $record->invoiceId = new InvoiceIdentifier('89890001K', 'TEST123', new DateTimeImmutable('2025-12-10'));
+        $record->previousInvoiceId = new InvoiceIdentifier('89890001K', 'TEST122', new DateTimeImmutable('2025-12-08'));
+        $record->previousHash = 'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA';
+        $record->hashedAt = new DateTimeImmutable();
+        $record->hash = $record->calculateHash();
+        $record->validate();
+        return $record;
     }
 
-    public function testRemisionRequerimientoWithNullIsRequirementEnd(): void {
-        $client = $this->createAeatClient();
-        $remision = new RemisionRequerimiento('REF123', null);
-        $client->setRemisionRequerimiento($remision);
-
-        $cabeceraElement = $this->buildCabeceraXml($client);
-
-        $remisionElement = $cabeceraElement->get('sum1:RemisionRequerimiento');
-        $this->assertNotNull($remisionElement, 'RemisionRequerimiento element should exist');
-
-        $refElement = $remisionElement->get('sum1:RefRequerimiento');
-        $this->assertNotNull($refElement, 'RefRequerimiento element should exist');
-        $this->assertEquals('REF123', $refElement->asText());
-
-        $finElement = $remisionElement->get('sum1:FinRequerimiento');
-        $this->assertNotNull($finElement, 'FinRequerimiento element should exist');
-        $this->assertEquals('N', $finElement->asText(), 'FinRequerimiento should be "N" when isRequirementEnd is null');
+    public function testThrowsExceptionForMalformedXmlResponse(): void {
+        $this->expectException(AeatException::class);
+        $this->expectExceptionMessage('Failed to parse XML response');
+        $client = $this->getMockedClient(new Response(200, [], '<element>Malformed XML</notClosingElement>'));
+        $record = $this->getMockedRecord();
+        $client->send([$record])->wait();
     }
 
-    public function testRemisionRequerimientoWithFalseIsRequirementEnd(): void {
-        $client = $this->createAeatClient();
-        $remision = new RemisionRequerimiento('REF456', false);
-        $client->setRemisionRequerimiento($remision);
-
-        $cabeceraElement = $this->buildCabeceraXml($client);
-
-        $remisionElement = $cabeceraElement->get('sum1:RemisionRequerimiento');
-        $this->assertNotNull($remisionElement, 'RemisionRequerimiento element should exist');
-
-        $refElement = $remisionElement->get('sum1:RefRequerimiento');
-        $this->assertNotNull($refElement, 'RefRequerimiento element should exist');
-        $this->assertEquals('REF456', $refElement->asText());
-
-        $finElement = $remisionElement->get('sum1:FinRequerimiento');
-        $this->assertNotNull($finElement, 'FinRequerimiento element should exist');
-        $this->assertEquals('N', $finElement->asText(), 'FinRequerimiento should be "N" when isRequirementEnd is false');
+    public function testThrowsExceptionForUnexpectedXmlResponse(): void {
+        $this->expectException(AeatException::class);
+        $this->expectExceptionMessage('Missing <tikR:RespuestaRegFactuSistemaFacturacion /> element from response');
+        $client = $this->getMockedClient(new Response(401, [], '<html><body>Unauthorized</body></html>'));
+        $record = $this->getMockedRecord();
+        $client->send([$record])->wait();
     }
 
-    public function testRemisionRequerimientoWithTrueIsRequirementEnd(): void {
-        $client = $this->createAeatClient();
-        $remision = new RemisionRequerimiento('REF789', true);
-        $client->setRemisionRequerimiento($remision);
-
-        $cabeceraElement = $this->buildCabeceraXml($client);
-
-        $remisionElement = $cabeceraElement->get('sum1:RemisionRequerimiento');
-        $this->assertNotNull($remisionElement, 'RemisionRequerimiento element should exist');
-
-        $refElement = $remisionElement->get('sum1:RefRequerimiento');
-        $this->assertNotNull($refElement, 'RefRequerimiento element should exist');
-        $this->assertEquals('REF789', $refElement->asText());
-
-        $finElement = $remisionElement->get('sum1:FinRequerimiento');
-        $this->assertNotNull($finElement, 'FinRequerimiento element should exist');
-        $this->assertEquals('S', $finElement->asText(), 'FinRequerimiento should be "S" when isRequirementEnd is true');
-    }
-
-    public function testRemisionRequerimientoNotAddedWhenNotSet(): void {
-        $client = $this->createAeatClient();
-
-        $cabeceraElement = $this->buildCabeceraXml($client);
-
-        // Verify RemisionRequerimiento is not added
-        $remisionElement = $cabeceraElement->get('sum1:RemisionRequerimiento');
-        $this->assertNull($remisionElement, 'RemisionRequerimiento element should not exist when not set');
+    public function testThrowsExceptionOnConnectionError(): void {
+        $this->expectException(ConnectException::class);
+        $this->expectExceptionMessage('Exception message');
+        $client = $this->getMockedClient(new ConnectException('Exception message', new Request('GET', 'test')));
+        $record = $this->getMockedRecord();
+        $client->send([$record])->wait();
     }
 }
