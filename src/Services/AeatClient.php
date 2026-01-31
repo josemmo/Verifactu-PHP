@@ -2,8 +2,8 @@
 namespace josemmo\Verifactu\Services;
 
 use GuzzleHttp\Client;
-use GuzzleHttp\Exception\GuzzleException;
 use GuzzleHttp\Promise\PromiseInterface;
+use InvalidArgumentException;
 use josemmo\Verifactu\Exceptions\AeatException;
 use josemmo\Verifactu\Models\ComputerSystem;
 use josemmo\Verifactu\Models\Records\CancellationRecord;
@@ -12,6 +12,7 @@ use josemmo\Verifactu\Models\Records\Record;
 use josemmo\Verifactu\Models\Records\RegistrationRecord;
 use josemmo\Verifactu\Models\Records\VoluntaryDiscontinuation;
 use josemmo\Verifactu\Models\Responses\AeatResponse;
+use Psr\Http\Client\ClientExceptionInterface;
 use Psr\Http\Message\ResponseInterface;
 use SensitiveParameter;
 use UXML\UXML;
@@ -128,8 +129,8 @@ class AeatClient {
      *
      * @return PromiseInterface<AeatResponse> Response from service
      *
-     * @throws AeatException   if AEAT server returned an error
-     * @throws GuzzleException if request sending failed
+     * @throws AeatException            if AEAT server returned an error
+     * @throws ClientExceptionInterface if request sending failed
      */
     public function send(array $records): PromiseInterface { /** @phpstan-ignore generics.notGeneric */
         // Build initial request
@@ -165,6 +166,7 @@ class AeatClient {
         // Send request
         $options = [
             'base_uri' => $this->getBaseUri(),
+            'http_errors' => false,
             'headers' => [
                 'Content-Type' => 'text/xml',
                 'User-Agent' => "Mozilla/5.0 (compatible; {$this->system->name}/{$this->system->version})",
@@ -181,7 +183,13 @@ class AeatClient {
         // Parse and return response
         return $responsePromise
             ->then(fn (ResponseInterface $response): string => $response->getBody()->getContents())
-            ->then(fn (string $response): UXML => UXML::fromString($response))
+            ->then(function (string $response): UXML {
+                try {
+                    return UXML::fromString($response);
+                } catch (InvalidArgumentException $e) {
+                    throw new AeatException('Failed to parse XML response', previous: $e);
+                }
+            })
             ->then(fn (UXML $xml): AeatResponse => AeatResponse::from($xml));
     }
 
