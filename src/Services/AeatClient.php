@@ -155,7 +155,7 @@ class AeatClient {
         if ($this->remisionRequerimiento !== null) {
             $remisionRequerimientoElement = $cabeceraElement->add('sum1:RemisionRequerimiento');
             $remisionRequerimientoElement->add('sum1:RefRequerimiento', $this->remisionRequerimiento->requirementReference);
-            $remisionRequerimientoElement->add('sum1:FinRequerimiento', $this->remisionRequerimiento->isRequirementEnd ? 'S' : 'N');
+            $remisionRequerimientoElement->add('sum1:FinRequerimiento', $this->remisionRequerimiento->isRequirementEnd ?? false ? 'S' : 'N');
         }
 
         // Add registration records
