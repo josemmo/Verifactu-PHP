@@ -21,9 +21,7 @@ class RemisionRequerimiento extends Model {
         ?bool $isRequirementEnd = null,
     ) {
         $this->requirementReference = $requirementReference;
-        if ($isRequirementEnd !== null) {
-            $this->isRequirementEnd = $isRequirementEnd;
-        }
+        $this->isRequirementEnd = $isRequirementEnd ?? false;
     }
 
     /**

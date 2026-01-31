@@ -69,6 +69,6 @@ final class RemisionRequerimientoTest extends TestCase {
 
         $remision = new RemisionRequerimiento('REF789');
         $this->assertEquals('REF789', $remision->requirementReference);
-        $this->assertNull($remision->isRequirementEnd);
+        $this->assertFalse($remision->isRequirementEnd);
     }
 }
