@@ -10,6 +10,7 @@ use josemmo\Verifactu\Models\Records\CancellationRecord;
 use josemmo\Verifactu\Models\Records\FiscalIdentifier;
 use josemmo\Verifactu\Models\Records\Record;
 use josemmo\Verifactu\Models\Records\RegistrationRecord;
+use josemmo\Verifactu\Models\Records\RemisionRequerimiento;
 use josemmo\Verifactu\Models\Responses\AeatResponse;
 use Psr\Http\Message\ResponseInterface;
 use SensitiveParameter;
@@ -30,6 +31,7 @@ class AeatClient {
     private ?string $certificatePath = null;
     private ?string $certificatePassword = null;
     private ?FiscalIdentifier $representative = null;
+    private ?RemisionRequerimiento $remisionRequerimiento = null;
     private bool $isProduction = true;
     private bool $isEntitySeal = false;
 
@@ -80,6 +82,18 @@ class AeatClient {
      */
     public function setRepresentative(?FiscalIdentifier $representative): static {
         $this->representative = $representative;
+        return $this;
+    }
+
+    /**
+     * Set remisión por requerimiento
+     *
+     * @param RemisionRequerimiento|null $remisionRequerimiento Remisión por requerimiento details
+     *
+     * @return $this This instance
+     */
+    public function setRemisionRequerimiento(?RemisionRequerimiento $remisionRequerimiento): static {
+        $this->remisionRequerimiento = $remisionRequerimiento;
         return $this;
     }
 
@@ -136,6 +150,11 @@ class AeatClient {
             $representanteElement = $cabeceraElement->add('sum1:Representante');
             $representanteElement->add('sum1:NombreRazon', $this->representative->name);
             $representanteElement->add('sum1:NIF', $this->representative->nif);
+        }
+        if ($this->remisionRequerimiento !== null) {
+            $remisionRequerimientoElement = $cabeceraElement->add('sum1:RemisionRequerimiento');
+            $remisionRequerimientoElement->add('sum1:RefRequerimiento', $this->remisionRequerimiento->requirementReference);
+            $remisionRequerimientoElement->add('sum1:FinRequerimiento', $this->remisionRequerimiento->isRequirementEnd ? 'S' : 'N');
         }
 
         // Add registration records

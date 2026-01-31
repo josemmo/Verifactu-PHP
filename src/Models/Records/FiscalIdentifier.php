@@ -7,8 +7,8 @@ use Symfony\Component\Validator\Constraints as Assert;
 /**
  * Identificador fiscal
  *
- * @field Caberecera/ObligadoEmision
- * @field Caberecera/Representante
+ * @field Cabecera/ObligadoEmision
+ * @field Cabecera/Representante
  */
 class FiscalIdentifier extends Model {
     /**
