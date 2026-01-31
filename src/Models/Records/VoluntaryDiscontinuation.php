@@ -35,7 +35,6 @@ class VoluntaryDiscontinuation extends Model {
      *
      * @field Caberecera/RemisionVoluntaria/FechaFinVeriFactu
      */
-    #[Assert\NotBlank]
     public ?DateTimeImmutable $endDate = null;
 
     /**
