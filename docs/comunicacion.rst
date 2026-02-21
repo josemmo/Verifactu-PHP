@@ -55,3 +55,20 @@ En caso de un envío correcto de registros de facturación, la respuesta contend
     } else {
         echo "Rejected: " . $aeatResponse->items[0]->errorDescription . "\n";
     }
+
+Requerimiento de información
+----------------------------
+
+En caso de que el SIF opere en modo "No VERI*FACTU", la AEAT puede solicitar un requerimiento de información.
+Esta funcionalidad se ve implementada en el método :php:method:`josemmo\Verifactu\Services\AeatClient::setRequirementReference()`:
+
+.. code-block:: php
+
+    // Para enviar la primera página de registros
+    $client->setRequirementReference('REF00001ABDEAF1234');
+
+    // Para enviar la última página de registros (fin del requerimiento)
+    $client->setRequirementReference('REF00001ABDEAF1234', true);
+
+    // Para desactivar el modo de envío de requirimiento de informacióna
+    $client->setRequirementReference(null);

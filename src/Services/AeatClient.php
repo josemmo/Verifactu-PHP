@@ -31,6 +31,8 @@ class AeatClient {
     private ?string $certificatePath = null;
     private ?string $certificatePassword = null;
     private ?FiscalIdentifier $representative = null;
+    private ?string $requirementReference = null;
+    private bool $isLastRequirementSubmission = false;
     private bool $isProduction = true;
     private bool $isEntitySeal = false;
 
@@ -81,6 +83,23 @@ class AeatClient {
      */
     public function setRepresentative(?FiscalIdentifier $representative): static {
         $this->representative = $representative;
+        return $this;
+    }
+
+    /**
+     * Set requirement reference
+     *
+     * Mandatory in case a of a non-voluntary remission upon request by the AEAT ("remisión por requerimiento").
+     * Otherwise must be unset.
+     *
+     * @param string|null $requirementReference        Requirement reference or `null` to clear
+     * @param boolean     $isLastRequirementSubmission Whether there are no more records to submit after this remission
+     *
+     * @return $this This instance
+     */
+    public function setRequirementReference(?string $requirementReference, bool $isLastRequirementSubmission = false): static {
+        $this->requirementReference = $requirementReference;
+        $this->isLastRequirementSubmission = $isLastRequirementSubmission;
         return $this;
     }
 
@@ -137,6 +156,11 @@ class AeatClient {
             $representanteElement = $cabeceraElement->add('sum1:Representante');
             $representanteElement->add('sum1:NombreRazon', $this->representative->name);
             $representanteElement->add('sum1:NIF', $this->representative->nif);
+        }
+        if ($this->requirementReference !== null) {
+            $remisionRequerimientoElement = $cabeceraElement->add('sum1:RemisionRequerimiento');
+            $remisionRequerimientoElement->add('sum1:RefRequerimiento', $this->requirementReference);
+            $remisionRequerimientoElement->add('sum1:FinRequerimiento', $this->isLastRequirementSubmission ? 'S' : 'N');
         }
 
         // Add registration records
