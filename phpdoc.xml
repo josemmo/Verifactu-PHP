@@ -11,13 +11,19 @@
         <cache>build/cache</cache>
     </paths>
     <version number="latest">
-        <api format="php">
+        <api ignore-packages="true">
             <source dsn=".">
                 <path>src</path>
             </source>
             <visibility>public</visibility>
             <include-source>false</include-source>
         </api>
+        <guide>
+            <source dsn=".">
+                <path>docs</path>
+            </source>
+            <output>guide</output>
+        </guide>
     </version>
     <setting name="template.color" value="deep-orange" />
 </phpdocumentor>
