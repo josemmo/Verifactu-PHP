@@ -4,6 +4,7 @@
     <meta charset="utf-8">
             <title>Verifactu-PHP</title>
     
+
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <base href="../">
     <link rel="icon" href="images/favicon.ico"/>
@@ -109,162 +110,68 @@
 </aside>
 
             <div class="phpdocumentor-column -nine phpdocumentor-content">
-                                <section>
-                                        <ul class="phpdocumentor-breadcrumbs">
-    </ul>
-
-    <article class="phpdocumentor-element -file">
-        <h2 class="phpdocumentor-content__title">Model.php</h2>
-
-        
-        
-        
-        
-
-
-        
-<h3 id="toc">
-    Table of Contents
-    <a href="files/src-models-model.html#toc" class="headerlink"><i class="fas fa-link"></i></a>
-
-</h3>
-
-
-
-
-    <h4 id="toc-classes">
-        Classes
-        <a href="files/src-models-model.html#toc-classes" class="headerlink"><i class="fas fa-link"></i></a>
-
-    </h4>
-    <dl class="phpdocumentor-table-of-contents">
-                    <dt class="phpdocumentor-table-of-contents__entry -class"><a href="classes/josemmo-Verifactu-Models-Model.html"><abbr title="\josemmo\Verifactu\Models\Model">Model</abbr></a></dt>    </dl>
-
-
-
-
-
-
-
-
-
-        
-
-        
-        <div class="phpdocumentor-modal" id="source-view">
-    <div class="phpdocumentor-modal-bg" data-exit-button></div>
-    <div class="phpdocumentor-modal-container">
-        <div class="phpdocumentor-modal-content">
-            <pre style="max-height: 500px; overflow-y: scroll" data-src="files/src/Models/Model.php.txt" class="language-php line-numbers linkable-line-numbers"></pre>
-        </div>
-        <button data-exit-button class="phpdocumentor-modal__close">&times;</button>
-    </div>
-</div>
-
-    <script type="text/javascript">
-        (function () {
-            function loadExternalCodeSnippet(el, url, line) {
-                Array.prototype.slice.call(el.querySelectorAll('pre[data-src]')).forEach((pre) => {
-                    const src = url || pre.getAttribute('data-src').replace(/\\/g, '/');
-                    const language = 'php';
-
-                    const code = document.createElement('code');
-                    code.className = 'language-' + language;
-                    pre.textContent = '';
-                    pre.setAttribute('data-line', line)
-                    code.textContent = 'Loading…';
-                    pre.appendChild(code);
-
-                    var xhr = new XMLHttpRequest();
-
-                    xhr.open('GET', src, true);
-
-                    xhr.onreadystatechange = function () {
-                        if (xhr.readyState !== 4) {
-                            return;
-                        }
-
-                        if (xhr.status < 400 && xhr.responseText) {
-                            code.textContent = xhr.responseText;
-                            Prism.highlightElement(code);
-                            d=document.getElementsByClassName("line-numbers");
-                            d[0].scrollTop = d[0].children[1].offsetTop;
-                            return;
-                        }
-
-                        if (xhr.status === 404) {
-                            code.textContent = '✖ Error: File could not be found';
-                            return;
-                        }
-
-                        if (xhr.status >= 400) {
-                            code.textContent = '✖ Error ' + xhr.status + ' while fetching file: ' + xhr.statusText;
-                            return;
-                        }
-
-                        code.textContent = '✖ Error: An unknown error occurred';
-                    };
-
-                    xhr.send(null);
-                });
-            }
-
-            const modalButtons = document.querySelectorAll("[data-modal]");
-            const openedAsLocalFile = window.location.protocol === 'file:';
-            if (modalButtons.length > 0 && openedAsLocalFile) {
-                console.warn(
-                    'Viewing the source code is unavailable because you are opening this page from the file:// scheme; ' +
-                    'browsers block XHR requests when a page is opened this way'
-                );
-            }
-
-            modalButtons.forEach(function (trigger) {
-                if (openedAsLocalFile) {
-                    trigger.setAttribute("hidden", "hidden");
-                }
-
-                trigger.addEventListener("click", function (event) {
-                    event.preventDefault();
-                    const modal = document.getElementById(trigger.dataset.modal);
-                    if (!modal) {
-                        console.error(`Modal with id "${trigger.dataset.modal}" could not be found`);
-                        return;
-                    }
-                    modal.classList.add("phpdocumentor-modal__open");
-
-                    loadExternalCodeSnippet(modal, trigger.dataset.src || null, trigger.dataset.line)
-                    const exits = modal.querySelectorAll("[data-exit-button]");
-                    exits.forEach(function (exit) {
-                        exit.addEventListener("click", function (event) {
-                            event.preventDefault();
-                            modal.classList.remove("phpdocumentor-modal__open");
-                        });
-                    });
-                });
-            });
-        })();
-    </script>
-
-    </article>
-                                </section>
-                <section class="phpdocumentor-on-this-page__sidebar">
-                            
-    <section class="phpdocumentor-on-this-page__content">
-        <strong class="phpdocumentor-on-this-page__title">On this page</strong>
-
-        <ul class="phpdocumentor-list -clean">
-            <li class="phpdocumentor-on-this-page-section__title">Table Of Contents</li>
-            <li>
-                <ul class="phpdocumentor-list -clean">
-                                                                                                        <li><a href="files/src-models-model.html#toc-classes">Classes</a></li>
-                                                                                                                    </ul>
-            </li>
+                                        <section class="section " id="comunicacion-con-la-aeat">
+            <h1>Comunicación con la AEAT</h1>
 
             
-                    </ul>
+    <p>Para comunicarnos con el servidor de la AEAT, al que deberemos enviar los registros de facturación obligatoriamente si nuestro SIF opera en el modo VERI*FACTU, la librería proporciona la clase <a href="classes/josemmo-Verifactu-Services-AeatClient.html"><abbr title="\josemmo\Verifactu\Services\AeatClient">AeatClient</abbr></a>
+.</p>
+
+            <section class="section " id="envio-de-registros-de-facturacion">
+            <h2>Envío de registros de facturación</h2>
+
+            
+    <p>Crea una instancia de <a href="classes/josemmo-Verifactu-Models-ComputerSystem.html"><abbr title="\josemmo\Verifactu\Models\ComputerSystem">ComputerSystem</abbr></a>
+ con los datos de tu SIF, y prepara un <a href="classes/josemmo-Verifactu-Models-Records-FiscalIdentifier.html"><abbr title="\josemmo\Verifactu\Models\Records\FiscalIdentifier">FiscalIdentifier</abbr></a>
+ con el nombre y NIF del emisor o responsable tributario.
+Debes indicar la ruta hacia el fichero PFX que contiene tu certificado de la Fábrica Nacional de Moneda y Timbre (FMNT) o entidad similar autorizada por la AEAT para poder comunicarte con su servidor.</p>
+
+            <pre><code class="language-php">use josemmo\Verifactu\Models\ComputerSystem;
+use josemmo\Verifactu\Models\Records\FiscalIdentifier;
+use josemmo\Verifactu\Services\AeatClient;
+
+// Define los datos del SIF
+$system = new ComputerSystem();
+$system-&gt;vendorName = &#039;Perico de los Palotes, S.A.&#039;;
+$system-&gt;vendorNif = &#039;A00000000&#039;;
+$system-&gt;name = &#039;Test SIF&#039;;
+$system-&gt;id = &#039;XX&#039;;
+$system-&gt;version = &#039;0.0.1&#039;;
+$system-&gt;installationNumber = &#039;ABC0123&#039;;
+$system-&gt;onlySupportsVerifactu = true;
+$system-&gt;supportsMultipleTaxpayers = true;
+$system-&gt;hasMultipleTaxpayers = false;
+$system-&gt;validate();
+
+// Define el responsable tributario
+$taxpayer = new FiscalIdentifier(&#039;Perico de los Palotes, S.A.&#039;, &#039;A00000000&#039;);
+
+// Crea el AeatClient
+$client = new AeatClient($system, $taxpayer);
+$client-&gt;setCertificate(__DIR__ . &#039;/ruta/certificado.pfx&#039;, &#039;contraseña&#039;);
+$client-&gt;setProduction(false); // Para cambiar al entorno de preproducción de la AEAT</code></pre>
+
+            
+    <p>Envía los registros a la AEAT (hasta un máximo de 1000 por llamada):</p>
+
+            <pre><code class="language-php">$aeatResponse = $client-&gt;send([$record])-&gt;wait();</code></pre>
+
+            
+    <p>Procesa la respuesta.
+En caso de un envío correcto de registros de facturación, la respuesta contendrá un Código Seguro de Verificación (CSV):</p>
+
+            <pre><code class="language-php">use josemmo\Verifactu\Models\Responses\ResponseStatus;
+
+if ($aeatResponse-&gt;status === ResponseStatus::Correct) {
+    echo &quot;Accepted: &quot; . $aeatResponse-&gt;csv . &quot;\n&quot;;
+} else {
+    echo &quot;Rejected: &quot; . $aeatResponse-&gt;items[0]-&gt;errorDescription . &quot;\n&quot;;
+}</code></pre>
+
     </section>
 
-                </section>
+    </section>
+
                             </div>
             <section data-search-results class="phpdocumentor-search-results phpdocumentor-search-results--hidden">
     <section class="phpdocumentor-search-results__dialog">
@@ -278,7 +185,7 @@
     </section>
 </section>
         </div>
-        <a href="files/src-models-model.html#top" class="phpdocumentor-back-to-top"><i class="fas fa-chevron-circle-up"></i></a>
+        <a href="#top" class="phpdocumentor-back-to-top"><i class="fas fa-chevron-circle-up"></i></a>
 
     </main>
 

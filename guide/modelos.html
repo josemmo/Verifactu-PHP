@@ -4,6 +4,7 @@
     <meta charset="utf-8">
             <title>Verifactu-PHP</title>
     
+
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <base href="../">
     <link rel="icon" href="images/favicon.ico"/>
@@ -109,162 +110,68 @@
 </aside>
 
             <div class="phpdocumentor-column -nine phpdocumentor-content">
-                                <section>
-                                        <ul class="phpdocumentor-breadcrumbs">
-    </ul>
-
-    <article class="phpdocumentor-element -file">
-        <h2 class="phpdocumentor-content__title">Model.php</h2>
-
-        
-        
-        
-        
-
-
-        
-<h3 id="toc">
-    Table of Contents
-    <a href="files/src-models-model.html#toc" class="headerlink"><i class="fas fa-link"></i></a>
-
-</h3>
-
-
-
-
-    <h4 id="toc-classes">
-        Classes
-        <a href="files/src-models-model.html#toc-classes" class="headerlink"><i class="fas fa-link"></i></a>
-
-    </h4>
-    <dl class="phpdocumentor-table-of-contents">
-                    <dt class="phpdocumentor-table-of-contents__entry -class"><a href="classes/josemmo-Verifactu-Models-Model.html"><abbr title="\josemmo\Verifactu\Models\Model">Model</abbr></a></dt>    </dl>
-
-
-
-
-
-
-
-
-
-        
-
-        
-        <div class="phpdocumentor-modal" id="source-view">
-    <div class="phpdocumentor-modal-bg" data-exit-button></div>
-    <div class="phpdocumentor-modal-container">
-        <div class="phpdocumentor-modal-content">
-            <pre style="max-height: 500px; overflow-y: scroll" data-src="files/src/Models/Model.php.txt" class="language-php line-numbers linkable-line-numbers"></pre>
-        </div>
-        <button data-exit-button class="phpdocumentor-modal__close">&times;</button>
-    </div>
-</div>
-
-    <script type="text/javascript">
-        (function () {
-            function loadExternalCodeSnippet(el, url, line) {
-                Array.prototype.slice.call(el.querySelectorAll('pre[data-src]')).forEach((pre) => {
-                    const src = url || pre.getAttribute('data-src').replace(/\\/g, '/');
-                    const language = 'php';
-
-                    const code = document.createElement('code');
-                    code.className = 'language-' + language;
-                    pre.textContent = '';
-                    pre.setAttribute('data-line', line)
-                    code.textContent = 'Loading…';
-                    pre.appendChild(code);
-
-                    var xhr = new XMLHttpRequest();
-
-                    xhr.open('GET', src, true);
-
-                    xhr.onreadystatechange = function () {
-                        if (xhr.readyState !== 4) {
-                            return;
-                        }
-
-                        if (xhr.status < 400 && xhr.responseText) {
-                            code.textContent = xhr.responseText;
-                            Prism.highlightElement(code);
-                            d=document.getElementsByClassName("line-numbers");
-                            d[0].scrollTop = d[0].children[1].offsetTop;
-                            return;
-                        }
-
-                        if (xhr.status === 404) {
-                            code.textContent = '✖ Error: File could not be found';
-                            return;
-                        }
-
-                        if (xhr.status >= 400) {
-                            code.textContent = '✖ Error ' + xhr.status + ' while fetching file: ' + xhr.statusText;
-                            return;
-                        }
-
-                        code.textContent = '✖ Error: An unknown error occurred';
-                    };
-
-                    xhr.send(null);
-                });
-            }
-
-            const modalButtons = document.querySelectorAll("[data-modal]");
-            const openedAsLocalFile = window.location.protocol === 'file:';
-            if (modalButtons.length > 0 && openedAsLocalFile) {
-                console.warn(
-                    'Viewing the source code is unavailable because you are opening this page from the file:// scheme; ' +
-                    'browsers block XHR requests when a page is opened this way'
-                );
-            }
-
-            modalButtons.forEach(function (trigger) {
-                if (openedAsLocalFile) {
-                    trigger.setAttribute("hidden", "hidden");
-                }
-
-                trigger.addEventListener("click", function (event) {
-                    event.preventDefault();
-                    const modal = document.getElementById(trigger.dataset.modal);
-                    if (!modal) {
-                        console.error(`Modal with id "${trigger.dataset.modal}" could not be found`);
-                        return;
-                    }
-                    modal.classList.add("phpdocumentor-modal__open");
-
-                    loadExternalCodeSnippet(modal, trigger.dataset.src || null, trigger.dataset.line)
-                    const exits = modal.querySelectorAll("[data-exit-button]");
-                    exits.forEach(function (exit) {
-                        exit.addEventListener("click", function (event) {
-                            event.preventDefault();
-                            modal.classList.remove("phpdocumentor-modal__open");
-                        });
-                    });
-                });
-            });
-        })();
-    </script>
-
-    </article>
-                                </section>
-                <section class="phpdocumentor-on-this-page__sidebar">
-                            
-    <section class="phpdocumentor-on-this-page__content">
-        <strong class="phpdocumentor-on-this-page__title">On this page</strong>
-
-        <ul class="phpdocumentor-list -clean">
-            <li class="phpdocumentor-on-this-page-section__title">Table Of Contents</li>
-            <li>
-                <ul class="phpdocumentor-list -clean">
-                                                                                                        <li><a href="files/src-models-model.html#toc-classes">Classes</a></li>
-                                                                                                                    </ul>
-            </li>
+                                        <section class="section " id="modelos-y-validacion">
+            <h1>Modelos y validación</h1>
 
             
-                    </ul>
+    <p>Verifactu-PHP proporciona una serie de clases llamadas <strong>modelos</strong>
+ que representan los distintos elementos de un registro VERI*FACTU.
+Todos los modelos de la librería heredan de la clase <a href="classes/josemmo-Verifactu-Models-Model.html"><abbr title="\josemmo\Verifactu\Models\Model">Model</abbr></a>
+.
+Algunos de los ejemplos más reprensentativos de modelos de esta librería son:</p>
+
+            
+
+<ul>
+    <li><a href="classes/josemmo-Verifactu-Models-Records-RegistrationRecord.html"><abbr title="\josemmo\Verifactu\Models\Records\RegistrationRecord">RegistrationRecord</abbr></a>
+: Clase principal para un registro de alta.</li>
+
+    <li><a href="classes/josemmo-Verifactu-Models-Records-FiscalIdentifier.html"><abbr title="\josemmo\Verifactu\Models\Records\FiscalIdentifier">FiscalIdentifier</abbr></a>
+: Identificación fiscal de una entidad (nombre y NIF). Se usa principalmente para identificar al responsable tributario en el envío.</li>
+
+    <li><a href="classes/josemmo-Verifactu-Models-Records-BreakdownDetails.html"><abbr title="\josemmo\Verifactu\Models\Records\BreakdownDetails">BreakdownDetails</abbr></a>
+: Detalle de desglose fiscal por cada tipo impositivo aplicado.</li>
+
+    <li><a href="classes/josemmo-Verifactu-Models-ComputerSystem.html"><abbr title="\josemmo\Verifactu\Models\ComputerSystem">ComputerSystem</abbr></a>
+: Datos del sistema informático emisor (SIF). Este objeto se usa para informar a AEAT sobre el software que genera los registros.</li>
+
+    <li><a href="classes/josemmo-Verifactu-Models-Responses-AeatResponse.html"><abbr title="\josemmo\Verifactu\Models\Responses\AeatResponse">AeatResponse</abbr></a>
+: Datos parseados de una respuesta recibida de una comunicación con el servidor de la AEAT.</li>
+
+</ul>
+
+            <section class="section " id="validacion">
+            <h2>Validación</h2>
+
+            
+    <p>Todos los modelos disponen del método <a href="classes/josemmo-Verifactu-Models-Model.html#method_validate"><abbr title="\josemmo\Verifactu\Models\Model::validate()">Model::validate()</abbr></a>
+, que revisa las reglas de formato y presencia de datos obligatorios según la normativa.
+Si algún campo tiene un valor incorrecto, este método lanzará una excepción del tipo <a href="classes/josemmo-Verifactu-Exceptions-InvalidModelException.html"><abbr title="\josemmo\Verifactu\Exceptions\InvalidModelException">InvalidModelException</abbr></a>
+.</p>
+
+            
+    <p>A continuación se muestra un ejemplo de uso:</p>
+
+            <pre><code class="language-php">use josemmo\Verifactu\Exceptions\InvalidModelException;
+use josemmo\Verifactu\Models\Records\BreakdownDetails;
+
+$details = new BreakdownDetails();
+$details-&gt;taxType = TaxType::IVA;
+$details-&gt;regimeType = RegimeType::C01;
+$details-&gt;operationType = OperationType::Subject;
+$details-&gt;baseAmount = &#039;100.00&#039;;
+$details-&gt;taxRate = &#039;10.00&#039;;
+$details-&gt;taxAmount = &#039;12.34&#039;; // &lt;-- Debería ser 10.00
+try {
+    $details-&gt;validate();
+} catch (InvalidModelException $e) {
+    echo &quot;Not a valid model: $e\n&quot;;
+}</code></pre>
+
     </section>
 
-                </section>
+    </section>
+
                             </div>
             <section data-search-results class="phpdocumentor-search-results phpdocumentor-search-results--hidden">
     <section class="phpdocumentor-search-results__dialog">
@@ -278,7 +185,7 @@
     </section>
 </section>
         </div>
-        <a href="files/src-models-model.html#top" class="phpdocumentor-back-to-top"><i class="fas fa-chevron-circle-up"></i></a>
+        <a href="#top" class="phpdocumentor-back-to-top"><i class="fas fa-chevron-circle-up"></i></a>
 
     </main>
 
