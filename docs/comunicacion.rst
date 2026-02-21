@@ -56,6 +56,22 @@ En caso de un envío correcto de registros de facturación, la respuesta contend
         echo "Rejected: " . $aeatResponse->items[0]->errorDescription . "\n";
     }
 
+Baja de remisión voluntaria
+--------------------------
+
+Para SIFs que estén funcionando en modo "VERI*FACTU" y que deseen dejar de operar en ese modo, es necesario notificar a la AEAT de la baja del sistema de remisión voluntaria de registros de facturación.
+Esto se puede hacer a través del método :php:method:`josemmo\Verifactu\Services\AeatClient::setVoluntaryRemissionEndDate()` de la librería:
+
+.. code-block:: php
+
+    use DateTimeImmutable;
+
+    // Configurar el cliente para enviar la fecha de baja a la AEAT en los envíos
+    $client->setVoluntaryRemissionEndDate(new DateTimeImmutable('2026-12-31'));
+
+    // Notificar fecha inmediatamente a la AEAT sin mandar registros
+    $client->send([])->wait();
+
 Requerimiento de información
 ----------------------------
 

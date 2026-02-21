@@ -1,6 +1,7 @@
 <?php
 namespace josemmo\Verifactu\Services;
 
+use DateTimeImmutable;
 use GuzzleHttp\Client;
 use GuzzleHttp\Promise\PromiseInterface;
 use InvalidArgumentException;
@@ -31,6 +32,8 @@ class AeatClient {
     private ?string $certificatePath = null;
     private ?string $certificatePassword = null;
     private ?FiscalIdentifier $representative = null;
+    private ?DateTimeImmutable $voluntaryRemissionEndDate = null;
+    private bool $isVoluntaryRemissionAffectedByIncident = false;
     private ?string $requirementReference = null;
     private bool $isLastRequirementSubmission = false;
     private bool $isProduction = true;
@@ -83,6 +86,20 @@ class AeatClient {
      */
     public function setRepresentative(?FiscalIdentifier $representative): static {
         $this->representative = $representative;
+        return $this;
+    }
+
+    /**
+     * Set end date of voluntary remission
+     *
+     * @param DateTimeImmutable|null $endDate              End date (time part will be ignored) or `null` to clear
+     * @param bool                   $isAffectedByIncident Whether voluntary remission was at some point affected by a technical incident
+     *
+     * @return $this This instance
+     */
+    public function setVoluntaryRemissionEndDate(?DateTimeImmutable $endDate, bool $isAffectedByIncident = false): static {
+        $this->voluntaryRemissionEndDate = $endDate;
+        $this->isVoluntaryRemissionAffectedByIncident = $isAffectedByIncident;
         return $this;
     }
 
@@ -156,6 +173,11 @@ class AeatClient {
             $representanteElement = $cabeceraElement->add('sum1:Representante');
             $representanteElement->add('sum1:NombreRazon', $this->representative->name);
             $representanteElement->add('sum1:NIF', $this->representative->nif);
+        }
+        if ($this->voluntaryRemissionEndDate !== null) {
+            $remisionVoluntariaElement = $cabeceraElement->add('sum1:RemisionVoluntaria');
+            $remisionVoluntariaElement->add('sum1:FechaFinVeriFactu', $this->voluntaryRemissionEndDate->format('d-m-Y'));
+            $remisionVoluntariaElement->add('sum1:Incidencia', $this->isVoluntaryRemissionAffectedByIncident ? 'S' : 'N');
         }
         if ($this->requirementReference !== null) {
             $remisionRequerimientoElement = $cabeceraElement->add('sum1:RemisionRequerimiento');
