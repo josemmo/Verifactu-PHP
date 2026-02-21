@@ -901,6 +901,16 @@ Search.appendIndex(
             "summary": "Set\u0020representative",
             "url": "classes/josemmo-Verifactu-Services-AeatClient.html#method_setRepresentative"
         },                {
+            "fqsen": "\\josemmo\\Verifactu\\Services\\AeatClient\u003A\u003AsetVoluntaryRemissionEndDate\u0028\u0029",
+            "name": "setVoluntaryRemissionEndDate",
+            "summary": "Set\u0020end\u0020date\u0020of\u0020voluntary\u0020remission",
+            "url": "classes/josemmo-Verifactu-Services-AeatClient.html#method_setVoluntaryRemissionEndDate"
+        },                {
+            "fqsen": "\\josemmo\\Verifactu\\Services\\AeatClient\u003A\u003AsetRequirementReference\u0028\u0029",
+            "name": "setRequirementReference",
+            "summary": "Set\u0020requirement\u0020reference",
+            "url": "classes/josemmo-Verifactu-Services-AeatClient.html#method_setRequirementReference"
+        },                {
             "fqsen": "\\josemmo\\Verifactu\\Services\\AeatClient\u003A\u003AsetProduction\u0028\u0029",
             "name": "setProduction",
             "summary": "Set\u0020production\u0020environment",

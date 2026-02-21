@@ -170,6 +170,43 @@ if ($aeatResponse-&gt;status === ResponseStatus::Correct) {
 
     </section>
 
+            <section class="section " id="baja-de-remision-voluntaria">
+            <h2>Baja de remisión voluntaria</h2>
+
+            
+    <p>Para SIFs que estén funcionando en modo &quot;VERI*FACTU&quot; y que deseen dejar de operar en ese modo, es necesario notificar a la AEAT de la baja del sistema de remisión voluntaria de registros de facturación.
+Esto se puede hacer a través del método <a href="classes/josemmo-Verifactu-Services-AeatClient.html#method_setVoluntaryRemissionEndDate"><abbr title="\josemmo\Verifactu\Services\AeatClient::setVoluntaryRemissionEndDate()">AeatClient::setVoluntaryRemissionEndDate()</abbr></a>
+ de la librería:</p>
+
+            <pre><code class="language-php">use DateTimeImmutable;
+
+// Configurar el cliente para enviar la fecha de baja a la AEAT en los envíos
+$client-&gt;setVoluntaryRemissionEndDate(new DateTimeImmutable(&#039;2026-12-31&#039;));
+
+// Notificar fecha inmediatamente a la AEAT sin mandar registros
+$client-&gt;send([])-&gt;wait();</code></pre>
+
+    </section>
+
+            <section class="section " id="requerimiento-de-informacion">
+            <h2>Requerimiento de información</h2>
+
+            
+    <p>En caso de que el SIF opere en modo &quot;No VERI*FACTU&quot;, la AEAT puede solicitar un requerimiento de información.
+Esta funcionalidad se ve implementada en el método <a href="classes/josemmo-Verifactu-Services-AeatClient.html#method_setRequirementReference"><abbr title="\josemmo\Verifactu\Services\AeatClient::setRequirementReference()">AeatClient::setRequirementReference()</abbr></a>
+:</p>
+
+            <pre><code class="language-php">// Para enviar la primera página de registros
+$client-&gt;setRequirementReference(&#039;REF00001ABDEAF1234&#039;);
+
+// Para enviar la última página de registros (fin del requerimiento)
+$client-&gt;setRequirementReference(&#039;REF00001ABDEAF1234&#039;, true);
+
+// Para desactivar el modo de envío de requirimiento de informacióna
+$client-&gt;setRequirementReference(null);</code></pre>
+
+    </section>
+
     </section>
 
                             </div>
